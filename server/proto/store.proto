@@ -1,0 +1,44 @@
+syntax = "proto3";
+package store;
+
+service Store {
+  rpc addItem (AddItemRequest) returns (AddItemResponse);
+  rpc removeItem(RemoveItemRequest) returns (RemoveItemResponse);
+  rpc getItems(GetItemsRequest) returns (GetItemsResponse);
+}
+
+message Item {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+  string category = 4;
+}
+
+message AddItemRequest {
+  string restId = 1;
+  string name = 2;
+  string description = 3;
+  string category = 4;
+}
+
+message AddItemResponse {
+  bool success = 1;
+}
+
+message RemoveItemRequest {
+  string restId = 1;
+  string itemId = 2;
+}
+
+message RemoveItemResponse {
+  bool success = 1;
+}
+
+message GetItemsRequest {
+  string restId = 1;
+  string category = 2;
+}
+
+message GetItemsResponse {
+  repeated Item items = 1;
+}

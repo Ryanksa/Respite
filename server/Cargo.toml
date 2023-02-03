@@ -1,0 +1,20 @@
+[package]
+name = "server"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[[bin]]
+name = "store-server"
+path = "src/store.rs"
+
+[dependencies]
+toml  = "0.7.1"
+serde = { version = "1.0.145", features = ["derive"] }
+tonic = "0.8.3"
+prost = "0.11.5"
+tokio = { version = "1.0", features = ["macros", "rt-multi-thread"] }
+
+[build-dependencies]
+tonic-build = "0.8.3"
