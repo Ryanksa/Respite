@@ -5,6 +5,8 @@ service Store {
   rpc addItem (AddItemRequest) returns (AddItemResponse);
   rpc removeItem(RemoveItemRequest) returns (RemoveItemResponse);
   rpc getItems(GetItemsRequest) returns (GetItemsResponse);
+  rpc createRestaurant(CreateRestaurantRequest) returns (CreateRestaurantResponse);
+  rpc deleteRestaurant(DeleteRestaurantRequest) returns (DeleteRestaurantResponse);
 }
 
 message Item {
@@ -12,6 +14,13 @@ message Item {
   string name = 2;
   string description = 3;
   string category = 4;
+  string restId = 5;
+}
+
+message Restaurant {
+  string id = 1;
+  string name = 2;
+  string description = 3;
 }
 
 message AddItemRequest {
@@ -22,7 +31,7 @@ message AddItemRequest {
 }
 
 message AddItemResponse {
-  bool success = 1;
+  string itemId = 1;
 }
 
 message RemoveItemRequest {
@@ -41,4 +50,21 @@ message GetItemsRequest {
 
 message GetItemsResponse {
   repeated Item items = 1;
+}
+
+message CreateRestaurantRequest {
+  string name = 1;
+  string description = 2;
+}
+
+message CreateRestaurantResponse {
+  string restId = 1;
+}
+
+message DeleteRestaurantRequest {
+  string restId = 1;
+}
+
+message DeleteRestaurantResponse {
+  bool success = 1;
 }

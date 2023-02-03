@@ -9,6 +9,10 @@ edition = "2021"
 name = "store-server"
 path = "src/store.rs"
 
+[[bin]]
+name = "client"
+path = "src/client.rs"
+
 [dependencies]
 toml  = "0.7.1"
 serde = { version = "1.0.145", features = ["derive"] }
