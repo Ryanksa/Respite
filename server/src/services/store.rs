@@ -65,7 +65,10 @@ impl Store for StoreService {
         request: Request<CreateRestaurantRequest>,
     ) -> Result<Response<CreateRestaurantResponse>, Status> {
         let req = request.into_inner();
-        println!("Database: create restaurant {}", req.name);
+        println!(
+            "Database: create restaurant {} for owner {}",
+            req.name, req.owner_id
+        );
 
         let res = CreateRestaurantResponse {
             rest_id: "unqiue-restaurant-id".to_owned(),

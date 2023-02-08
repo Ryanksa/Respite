@@ -1,1 +1,4 @@
-store_socket_addr = "127.0.0.1:6000"
+store_uri = "127.0.0.1:6000"
+
+db_uri = "postgres://postgres:postgres@localhost:5432/respite"
+db_pool_size = 5

@@ -1,10 +1,11 @@
-use std::fs;
-
 use serde::{Deserialize, Serialize};
+use std::fs;
 
 #[derive(Serialize, Deserialize)]
 pub struct Config {
-    pub store_socket_addr: String,
+    pub store_uri: String,
+    pub db_uri: String,
+    pub db_pool_size: u32,
 }
 
 impl Config {
@@ -13,7 +14,9 @@ impl Config {
         let config: Config = toml::from_str(&content).unwrap_or_else(|_| {
             println!("Config.toml not found...");
             Config {
-                store_socket_addr: "".to_owned(),
+                store_uri: "".to_owned(),
+                db_uri: "".to_owned(),
+                db_pool_size: 0,
             }
         });
         return config;

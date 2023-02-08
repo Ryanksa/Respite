@@ -5,20 +5,21 @@ edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[lib]
+name = "lib"
+path = "src/lib/lib.rs"
+
 [[bin]]
 name = "store-server"
 path = "src/store.rs"
-
-[[bin]]
-name = "client"
-path = "src/client.rs"
 
 [dependencies]
 toml  = "0.7.1"
 serde = { version = "1.0.145", features = ["derive"] }
 tonic = "0.8.3"
 prost = "0.11.5"
-tokio = { version = "1.0", features = ["macros", "rt-multi-thread"] }
+tokio = { version = "1.0", features = ["macros", "rt-multi-thread", "full"] }
+sqlx = { version = "0.6", features = ["runtime-tokio-rustls", "postgres"] }
 
 [build-dependencies]
 tonic-build = "0.8.3"

@@ -21,6 +21,7 @@ message Restaurant {
   string id = 1;
   string name = 2;
   string description = 3;
+  string ownerId = 4;
 }
 
 message AddItemRequest {
@@ -53,8 +54,9 @@ message GetItemsResponse {
 }
 
 message CreateRestaurantRequest {
-  string name = 1;
-  string description = 2;
+  string ownerId = 1;
+  string name = 2;
+  string description = 3;
 }
 
 message CreateRestaurantResponse {
