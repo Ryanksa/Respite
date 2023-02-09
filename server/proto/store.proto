@@ -4,9 +4,11 @@ package store;
 service Store {
   rpc addItem (AddItemRequest) returns (AddItemResponse);
   rpc removeItem(RemoveItemRequest) returns (RemoveItemResponse);
+  rpc getItem(GetItemRequest) returns (GetItemResponse);
   rpc getItems(GetItemsRequest) returns (GetItemsResponse);
   rpc createRestaurant(CreateRestaurantRequest) returns (CreateRestaurantResponse);
   rpc deleteRestaurant(DeleteRestaurantRequest) returns (DeleteRestaurantResponse);
+  rpc getRestaurant(GetRestaurantRequest) returns (GetRestaurantResponse);
 }
 
 message Item {
@@ -36,12 +38,19 @@ message AddItemResponse {
 }
 
 message RemoveItemRequest {
-  string restId = 1;
-  string itemId = 2;
+  string itemId = 1;
 }
 
 message RemoveItemResponse {
   bool success = 1;
+}
+
+message GetItemRequest {
+  string itemId = 1;
+}
+
+message GetItemResponse {
+  Item item = 1;
 }
 
 message GetItemsRequest {
@@ -69,4 +78,12 @@ message DeleteRestaurantRequest {
 
 message DeleteRestaurantResponse {
   bool success = 1;
+}
+
+message GetRestaurantRequest {
+  string restId = 1;
+}
+
+message GetRestaurantResponse {
+  Restaurant restaurant = 1;
 }

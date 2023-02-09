@@ -2,6 +2,7 @@ use crate::config::Config;
 use sqlx::postgres::PgPoolOptions;
 use sqlx::{Error, Pool, Postgres};
 use std::sync::Arc;
+use tonic::{Code, Status};
 
 #[allow(non_upper_case_globals)]
 static mut pool_cache: Option<Arc<Pool<Postgres>>> = None;
@@ -24,4 +25,12 @@ pub async fn get_pool() -> Result<Arc<Pool<Postgres>>, Error> {
         pool_cache = Some(pool.clone());
         Ok(pool)
     }
+}
+
+pub async fn get_pool_grpc() -> Result<Arc<Pool<Postgres>>, Status> {
+    let pool = match get_pool().await {
+        Ok(pool) => pool,
+        Err(err) => return Err(Status::new(Code::Internal, format!("{}", err))),
+    };
+    Ok(pool)
 }
