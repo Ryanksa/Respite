@@ -1,12 +1,14 @@
 use lib::db::get_pool_grpc;
 use sqlx::postgres::PgRow;
 use sqlx::{query, Row};
+use std::fs;
 use store_proto::store_server::Store;
 use store_proto::{
     AddItemRequest, AddItemResponse, CreateRestaurantRequest, CreateRestaurantResponse,
     DeleteRestaurantRequest, DeleteRestaurantResponse, GetItemRequest, GetItemResponse,
     GetItemsRequest, GetItemsResponse, GetRestaurantRequest, GetRestaurantResponse, Item,
-    RemoveItemRequest, RemoveItemResponse, Restaurant,
+    RemoveItemRequest, RemoveItemResponse, Restaurant, UploadItemImageRequest,
+    UploadItemImageResponse, UploadRestaurantLogoRequest, UploadRestaurantLogoResponse,
 };
 use tonic::{Code, Request, Response, Status};
 use uuid::Uuid;
@@ -60,6 +62,31 @@ impl Store for StoreService {
 
         let res = match db_result {
             Ok(_) => RemoveItemResponse { success: true },
+            Err(err) => return Err(Status::new(Code::Internal, format!("{}", err))),
+        };
+        Ok(Response::new(res))
+    }
+
+    async fn upload_item_image(
+        &self,
+        request: Request<UploadItemImageRequest>,
+    ) -> Result<Response<UploadItemImageResponse>, Status> {
+        let req = request.into_inner();
+        let path = format!("./img/{}", req.item_id);
+
+        if let Err(err) = fs::write(path.clone(), req.image) {
+            return Err(Status::new(Code::Internal, format!("{}", err)));
+        };
+
+        let pool = get_pool_grpc().await?;
+        let db_result = query("UPDATE items SET image = $1 WHERE id = $2")
+            .bind(path)
+            .bind(req.item_id)
+            .execute(pool.as_ref())
+            .await;
+
+        let res = match db_result {
+            Ok(_) => UploadItemImageResponse { success: true },
             Err(err) => return Err(Status::new(Code::Internal, format!("{}", err))),
         };
         Ok(Response::new(res))
@@ -158,6 +185,31 @@ impl Store for StoreService {
 
         let res = match db_result {
             Ok(_) => DeleteRestaurantResponse { success: true },
+            Err(err) => return Err(Status::new(Code::Internal, format!("{}", err))),
+        };
+        Ok(Response::new(res))
+    }
+
+    async fn upload_restaurant_logo(
+        &self,
+        request: Request<UploadRestaurantLogoRequest>,
+    ) -> Result<Response<UploadRestaurantLogoResponse>, Status> {
+        let req = request.into_inner();
+        let path = format!("./img/{}", req.rest_id);
+
+        if let Err(err) = fs::write(path.clone(), req.image) {
+            return Err(Status::new(Code::Internal, format!("{}", err)));
+        };
+
+        let pool = get_pool_grpc().await?;
+        let db_result = query("UPDATE restaurants SET image = $1 WHERE id = $2")
+            .bind(path)
+            .bind(req.rest_id)
+            .execute(pool.as_ref())
+            .await;
+
+        let res = match db_result {
+            Ok(_) => UploadRestaurantLogoResponse { success: true },
             Err(err) => return Err(Status::new(Code::Internal, format!("{}", err))),
         };
         Ok(Response::new(res))

@@ -4,10 +4,12 @@ package store;
 service Store {
   rpc addItem (AddItemRequest) returns (AddItemResponse);
   rpc removeItem(RemoveItemRequest) returns (RemoveItemResponse);
+  rpc uploadItemImage(UploadItemImageRequest) returns (UploadItemImageResponse);
   rpc getItem(GetItemRequest) returns (GetItemResponse);
   rpc getItems(GetItemsRequest) returns (GetItemsResponse);
   rpc createRestaurant(CreateRestaurantRequest) returns (CreateRestaurantResponse);
   rpc deleteRestaurant(DeleteRestaurantRequest) returns (DeleteRestaurantResponse);
+  rpc uploadRestaurantLogo(UploadRestaurantLogoRequest) returns (UploadRestaurantLogoResponse);
   rpc getRestaurant(GetRestaurantRequest) returns (GetRestaurantResponse);
 }
 
@@ -45,6 +47,15 @@ message RemoveItemResponse {
   bool success = 1;
 }
 
+message UploadItemImageRequest {
+  string itemId = 1;
+  bytes image = 2;
+}
+
+message UploadItemImageResponse {
+  bool success = 1;
+}
+
 message GetItemRequest {
   string itemId = 1;
 }
@@ -77,6 +88,15 @@ message DeleteRestaurantRequest {
 }
 
 message DeleteRestaurantResponse {
+  bool success = 1;
+}
+
+message UploadRestaurantLogoRequest {
+  string restId = 1;
+  bytes image = 2;
+}
+
+message UploadRestaurantLogoResponse {
   bool success = 1;
 }
 
