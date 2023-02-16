@@ -4,8 +4,10 @@ use std::fs;
 #[derive(Serialize, Deserialize)]
 pub struct Config {
     pub store_uri: String,
+    pub auth_uri: String,
     pub db_uri: String,
     pub db_pool_size: u32,
+    pub jwt_secret: String,
 }
 
 impl Config {
@@ -15,8 +17,10 @@ impl Config {
             println!("Config.toml not found...");
             Config {
                 store_uri: "".to_owned(),
+                auth_uri: "".to_owned(),
                 db_uri: "".to_owned(),
                 db_pool_size: 0,
+                jwt_secret: "".to_owned(),
             }
         });
         return config;

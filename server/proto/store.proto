@@ -11,6 +11,7 @@ service Store {
   rpc deleteRestaurant(DeleteRestaurantRequest) returns (DeleteRestaurantResponse);
   rpc uploadRestaurantLogo(UploadRestaurantLogoRequest) returns (UploadRestaurantLogoResponse);
   rpc getRestaurant(GetRestaurantRequest) returns (GetRestaurantResponse);
+  rpc getRestaurants(GetRestaurantsRequest) returns (GetRestaurantsResponse);
 }
 
 message Item {
@@ -106,4 +107,12 @@ message GetRestaurantRequest {
 
 message GetRestaurantResponse {
   Restaurant restaurant = 1;
+}
+
+message GetRestaurantsRequest {
+  string ownerId = 1;
+}
+
+message GetRestaurantsResponse {
+  repeated Restaurant restaurants = 1;
 }

@@ -1,10 +1,11 @@
+DROP DATABASE respite;
 CREATE DATABASE respite;
 
 \c respite;
 
 CREATE TABLE IF NOT EXISTS owners (
   id VARCHAR(64) PRIMARY KEY,
-  email VARCHAR(128) NOT NULL,
+  email VARCHAR(128) NOT NULL UNIQUE,
   password VARCHAR(128) NOT NULL
 );
 

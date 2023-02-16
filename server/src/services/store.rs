@@ -6,9 +6,10 @@ use store_proto::store_server::Store;
 use store_proto::{
     AddItemRequest, AddItemResponse, CreateRestaurantRequest, CreateRestaurantResponse,
     DeleteRestaurantRequest, DeleteRestaurantResponse, GetItemRequest, GetItemResponse,
-    GetItemsRequest, GetItemsResponse, GetRestaurantRequest, GetRestaurantResponse, Item,
-    RemoveItemRequest, RemoveItemResponse, Restaurant, UploadItemImageRequest,
-    UploadItemImageResponse, UploadRestaurantLogoRequest, UploadRestaurantLogoResponse,
+    GetItemsRequest, GetItemsResponse, GetRestaurantRequest, GetRestaurantResponse,
+    GetRestaurantsRequest, GetRestaurantsResponse, Item, RemoveItemRequest, RemoveItemResponse,
+    Restaurant, UploadItemImageRequest, UploadItemImageResponse, UploadRestaurantLogoRequest,
+    UploadRestaurantLogoResponse,
 };
 use tonic::{Code, Request, Response, Status};
 use uuid::Uuid;
@@ -236,6 +237,33 @@ impl Store for StoreService {
         let res = match db_result {
             Ok(restaurant) => GetRestaurantResponse {
                 restaurant: Some(restaurant),
+            },
+            Err(err) => return Err(Status::new(Code::Internal, format!("{}", err))),
+        };
+        Ok(Response::new(res))
+    }
+
+    async fn get_restaurants(
+        &self,
+        request: Request<GetRestaurantsRequest>,
+    ) -> Result<Response<GetRestaurantsResponse>, Status> {
+        let req = request.into_inner();
+
+        let pool = get_pool_grpc().await?;
+        let db_result = query("SELECT * FROM restaurants WHERE owner_id = $1")
+            .bind(req.owner_id)
+            .map(|row| Restaurant {
+                id: row.get("id"),
+                name: row.get("name"),
+                description: row.get("description"),
+                owner_id: row.get("owner_id"),
+            })
+            .fetch_all(pool.as_ref())
+            .await;
+
+        let res = match db_result {
+            Ok(restaurants) => GetRestaurantsResponse {
+                restaurants: restaurants,
             },
             Err(err) => return Err(Status::new(Code::Internal, format!("{}", err))),
         };
