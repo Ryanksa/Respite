@@ -1,19 +1,19 @@
 mod services;
 
 use lib::config::Config;
-use services::funnel::funnel_proto::funnel_server::FunnelServer;
-use services::funnel::FunnelService;
+use services::waiter::waiter_proto::waiter_server::WaiterServer;
+use services::waiter::WaiterService;
 use tonic::transport::Server;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let config = Config::new();
-    let addr = config.funnel_uri.parse()?;
+    let addr = config.waiter_uri.parse()?;
 
-    let funnel_service = FunnelService::default();
+    let waiter_service = WaiterService::default();
 
     Server::builder()
-        .add_service(FunnelServer::new(funnel_service))
+        .add_service(WaiterServer::new(waiter_service))
         .serve(addr)
         .await?;
     Ok(())

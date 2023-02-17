@@ -14,8 +14,8 @@ name = "store-server"
 path = "src/store.rs"
 
 [[bin]]
-name = "funnel-server"
-path = "src/funnel.rs"
+name = "waiter-server"
+path = "src/waiter.rs"
 
 [[bin]]
 name = "auth-server"

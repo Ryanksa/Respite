@@ -1,8 +1,3 @@
-use funnel_proto::funnel_server::Funnel;
-use funnel_proto::{
-    CompleteOrderRequest, CompleteOrderResponse, GetOrdersRequest, MakeOrderRequest,
-    MakeOrderResponse, Order,
-};
 use lib::db::get_pool_grpc;
 use sqlx::{query, Row};
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -11,16 +6,21 @@ use tokio_stream::wrappers::ReceiverStream;
 use tokio_stream::StreamExt;
 use tonic::{Code, Request, Response, Status};
 use uuid::Uuid;
+use waiter_proto::waiter_server::Waiter;
+use waiter_proto::{
+    CompleteOrderRequest, CompleteOrderResponse, GetOrdersRequest, MakeOrderRequest,
+    MakeOrderResponse, Order,
+};
 
-pub mod funnel_proto {
-    tonic::include_proto!("funnel");
+pub mod waiter_proto {
+    tonic::include_proto!("waiter");
 }
 
 #[derive(Debug, Default)]
-pub struct FunnelService {}
+pub struct WaiterService {}
 
 #[tonic::async_trait]
-impl Funnel for FunnelService {
+impl Waiter for WaiterService {
     async fn make_order(
         &self,
         request: Request<MakeOrderRequest>,

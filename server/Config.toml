@@ -1,6 +1,6 @@
-store_uri = "127.0.0.1:6030"
-funnel_uri = "127.0.0.1:6060"
-auth_uri = "127.0.0.1:6090"
+auth_uri = "127.0.0.1:6030"
+store_uri = "127.0.0.1:6060"
+waiter_uri = "127.0.0.1:6090"
 
 db_uri = "postgres://username:password@localhost:5432/respite"
 db_pool_size = 5

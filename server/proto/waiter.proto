@@ -1,7 +1,7 @@
 syntax = "proto3";
-package funnel;
+package waiter;
 
-service Funnel {
+service Waiter {
   rpc makeOrder (MakeOrderRequest) returns (MakeOrderResponse);
   rpc completeOrder (CompleteOrderRequest) returns (CompleteOrderResponse);
   rpc getOrders (GetOrdersRequest) returns (stream Order);
