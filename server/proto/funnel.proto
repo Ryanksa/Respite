@@ -1,0 +1,40 @@
+syntax = "proto3";
+package funnel;
+
+service Funnel {
+  rpc makeOrder (MakeOrderRequest) returns (MakeOrderResponse);
+  rpc completeOrder (CompleteOrderRequest) returns (CompleteOrderResponse);
+  rpc getOrders (GetOrdersRequest) returns (stream Order);
+}
+
+message Order {
+  string id = 1;
+  string itemName = 2;
+  float requested_at = 3;
+  bool completed = 4;
+  int32 table_number = 5;
+  string description = 6;
+}
+
+message MakeOrderRequest {
+  string itemId = 1;
+  int32 table_number = 2;
+  string description = 3;
+}
+
+message MakeOrderResponse {
+  string orderId = 1;
+}
+
+message CompleteOrderRequest {
+  string orderId = 1;
+}
+
+message CompleteOrderResponse {
+  bool success = 1;
+}
+
+message GetOrdersRequest {
+  string restId = 1;
+  float since = 2;
+}

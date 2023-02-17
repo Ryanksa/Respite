@@ -20,6 +20,7 @@ message Item {
   string description = 3;
   string category = 4;
   string restId = 5;
+  string image = 6;
 }
 
 message Restaurant {
@@ -27,6 +28,7 @@ message Restaurant {
   string name = 2;
   string description = 3;
   string ownerId = 4;
+  string logo = 5;
 }
 
 message AddItemRequest {

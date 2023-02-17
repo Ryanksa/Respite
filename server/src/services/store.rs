@@ -1,5 +1,4 @@
 use lib::db::get_pool_grpc;
-use sqlx::postgres::PgRow;
 use sqlx::{query, Row};
 use std::fs;
 use store_proto::store_server::Store;
@@ -108,6 +107,7 @@ impl Store for StoreService {
                 description: row.get("description"),
                 category: row.get("category"),
                 rest_id: row.get("rest_id"),
+                image: row.get("image"),
             })
             .fetch_one(pool.as_ref())
             .await;
@@ -130,12 +130,13 @@ impl Store for StoreService {
             query("SELECT * FROM items WHERE rest_id = $1 AND ($2 = '' OR category = $2)")
                 .bind(req.rest_id)
                 .bind(req.category)
-                .map(|row: PgRow| Item {
+                .map(|row| Item {
                     id: row.get("id"),
                     name: row.get("name"),
                     description: row.get("description"),
                     category: row.get("category"),
                     rest_id: row.get("rest_id"),
+                    image: row.get("image"),
                 })
                 .fetch_all(pool.as_ref())
                 .await;
@@ -230,6 +231,7 @@ impl Store for StoreService {
                 name: row.get("name"),
                 description: row.get("description"),
                 owner_id: row.get("owner_id"),
+                logo: row.get("logo"),
             })
             .fetch_one(pool.as_ref())
             .await;
@@ -257,6 +259,7 @@ impl Store for StoreService {
                 name: row.get("name"),
                 description: row.get("description"),
                 owner_id: row.get("owner_id"),
+                logo: row.get("logo"),
             })
             .fetch_all(pool.as_ref())
             .await;
