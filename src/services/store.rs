@@ -22,7 +22,6 @@ pub struct StoreService {
 }
 
 impl StoreService {
-    #[allow(dead_code)]
     pub fn new(pool: Arc<Pool<Postgres>>) -> Self {
         StoreService { pool: pool }
     }
@@ -36,11 +35,22 @@ impl Store for StoreService {
     ) -> Result<Response<CreateRestaurantResponse>, Status> {
         let req = request.into_inner();
         let rest_id = Uuid::new_v4();
+        let path = format!("./img/{}", rest_id.to_string());
 
-        let db_result =
-            insert_restaurant(rest_id.to_string(), req.name, req.description, req.owner_id)
-                .execute(self.pool.as_ref())
-                .await;
+        if let Err(err) = fs::write(path.clone(), req.image) {
+            log::error!("Store Service: {}", err);
+            return Err(Status::new(Code::Internal, ""));
+        };
+
+        let db_result = insert_restaurant(
+            rest_id.to_string(),
+            req.name,
+            req.description,
+            path,
+            req.owner_id,
+        )
+        .execute(self.pool.as_ref())
+        .await;
 
         let res = match db_result {
             Ok(_) => CreateRestaurantResponse {
@@ -59,29 +69,22 @@ impl Store for StoreService {
         request: Request<DeleteRestaurantRequest>,
     ) -> Result<Response<DeleteRestaurantResponse>, Status> {
         let req = request.into_inner();
+        let logo_path = format!("./img/{}", req.rest_id.clone());
 
-        match get_restaurant(req.rest_id.clone())
-            .fetch_one(self.pool.as_ref())
-            .await
-        {
-            Ok(row) => {
-                let logo_path: String = row.get("logo");
-                if let Err(err) = fs::remove_file(logo_path) {
-                    log::warn!("Store Service: {}", err);
-                }
-            }
-            Err(err) => {
-                log::error!("Store Service: {}", err);
-                return Err(Status::new(Code::NotFound, ""));
-            }
-        }
-
-        let db_result = delete_restaurant(req.rest_id)
+        let db_result = delete_restaurant(req.rest_id, req.owner_id)
             .execute(self.pool.as_ref())
             .await;
 
         let res = match db_result {
-            Ok(_) => DeleteRestaurantResponse { success: true },
+            Ok(result) => {
+                if result.rows_affected() == 0 {
+                    return Err(Status::new(Code::NotFound, ""));
+                }
+                if let Err(err) = fs::remove_file(logo_path) {
+                    log::warn!("Store Service: {}", err);
+                }
+                DeleteRestaurantResponse { success: true }
+            }
             Err(err) => {
                 log::error!("Store Service: {}", err);
                 return Err(Status::new(Code::Internal, ""));
@@ -97,17 +100,21 @@ impl Store for StoreService {
         let req = request.into_inner();
         let path = format!("./img/{}", req.rest_id);
 
-        if let Err(err) = fs::write(path.clone(), req.image) {
-            log::error!("Store Service: {}", err);
-            return Err(Status::new(Code::Internal, ""));
-        };
-
-        let db_result = upload_restaurant_logo(req.rest_id, path)
+        let db_result = upload_restaurant_logo(req.rest_id, path.clone(), req.owner_id)
             .execute(self.pool.as_ref())
             .await;
 
         let res = match db_result {
-            Ok(_) => UploadRestaurantLogoResponse { success: true },
+            Ok(result) => {
+                if result.rows_affected() == 0 {
+                    return Err(Status::new(Code::NotFound, ""));
+                }
+                if let Err(err) = fs::write(path, req.image) {
+                    log::error!("Store Service: {}", err);
+                    return Err(Status::new(Code::Internal, ""));
+                };
+                UploadRestaurantLogoResponse { success: true }
+            }
             Err(err) => {
                 log::error!("Store Service: {}", err);
                 return Err(Status::new(Code::Internal, ""));
@@ -127,7 +134,6 @@ impl Store for StoreService {
                 id: row.get("id"),
                 name: row.get("name"),
                 description: row.get("description"),
-                owner_id: row.get("owner_id"),
                 logo: row.get("logo"),
             })
             .fetch_one(self.pool.as_ref())
@@ -156,7 +162,6 @@ impl Store for StoreService {
                 id: row.get("id"),
                 name: row.get("name"),
                 description: row.get("description"),
-                owner_id: row.get("owner_id"),
                 logo: row.get("logo"),
             })
             .fetch_all(self.pool.as_ref())

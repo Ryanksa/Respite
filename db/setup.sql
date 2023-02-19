@@ -1,4 +1,3 @@
-DROP DATABASE IF EXISTS respite;
 CREATE DATABASE respite;
 
 \c respite;
@@ -13,8 +12,8 @@ CREATE TABLE IF NOT EXISTS restaurants (
   id VARCHAR(64) PRIMARY KEY,
   name VARCHAR(128) NOT NULL,
   description text,
-  owner_id VARCHAR(64) REFERENCES owners (id),
-  logo VARCHAR(128)
+  logo VARCHAR(128),
+  owner_id VARCHAR(64) REFERENCES owners (id)
 );
 
 CREATE TABLE IF NOT EXISTS items (
@@ -22,8 +21,8 @@ CREATE TABLE IF NOT EXISTS items (
   name VARCHAR(128) NOT NULL,
   description text,
   category VARCHAR(128),
-  rest_id VARCHAR(64) REFERENCES restaurants (id),
-  image VARCHAR(128)
+  image VARCHAR(128),
+  rest_id VARCHAR(64) REFERENCES restaurants (id)
 );
 
 CREATE TABLE IF NOT EXISTS orders (

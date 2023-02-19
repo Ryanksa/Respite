@@ -43,23 +43,32 @@ pub fn insert_restaurant(
     id: String,
     name: String,
     description: String,
+    logo: String,
     owner_id: String,
 ) -> Query<'static, Postgres, PgArguments> {
-    return query("INSERT INTO restaurants VALUES ($1, $2, $3, $4)")
+    return query("INSERT INTO restaurants VALUES ($1, $2, $3, $4, $5)")
         .bind(id)
         .bind(name)
         .bind(description)
+        .bind(logo)
         .bind(owner_id);
 }
 
-pub fn delete_restaurant(id: String) -> Query<'static, Postgres, PgArguments> {
-    return query("DELETE FROM restaurants WHERE id = $1").bind(id);
+pub fn delete_restaurant(id: String, owner_id: String) -> Query<'static, Postgres, PgArguments> {
+    return query("DELETE FROM restaurants WHERE id = $1 AND owner_id = $2")
+        .bind(id)
+        .bind(owner_id);
 }
 
-pub fn upload_restaurant_logo(id: String, path: String) -> Query<'static, Postgres, PgArguments> {
-    return query("UPDATE restaurants SET image = $1 WHERE id = $2")
-        .bind(path)
-        .bind(id);
+pub fn upload_restaurant_logo(
+    id: String,
+    logo: String,
+    owner_id: String,
+) -> Query<'static, Postgres, PgArguments> {
+    return query("UPDATE restaurants SET image = $1 WHERE id = $2 AND owner_id = $3")
+        .bind(logo)
+        .bind(id)
+        .bind(owner_id);
 }
 
 pub fn get_item(id: String) -> Query<'static, Postgres, PgArguments> {
@@ -77,35 +86,72 @@ pub fn insert_item(
     name: String,
     description: String,
     category: String,
+    image: String,
     rest_id: String,
+    owner_id: String,
 ) -> Query<'static, Postgres, PgArguments> {
-    return query("INSERT INTO items VALUES ($1, $2, $3, $4, $5)")
-        .bind(id)
-        .bind(name)
-        .bind(description)
-        .bind(category)
-        .bind(rest_id);
+    return query(
+        "
+        IF EXISTS (SELECT 1 FROM restaurants WHERE id = $6 AND owner_id = $7) 
+        INSERT INTO items VALUES ($1, $2, $3, $4, $5, $6)
+        ",
+    )
+    .bind(id)
+    .bind(name)
+    .bind(description)
+    .bind(category)
+    .bind(image)
+    .bind(rest_id)
+    .bind(owner_id);
 }
 
-pub fn delete_item(id: String) -> Query<'static, Postgres, PgArguments> {
-    return query("DELETE FROM items WHERE id = $1").bind(id);
+pub fn delete_item(id: String, owner_id: String) -> Query<'static, Postgres, PgArguments> {
+    return query(
+        "
+        DELETE i FROM items i 
+        JOIN restaurants r ON i.rest_id = r.id 
+        WHERE i.id = $1 AND r.owner_id = $2
+        ",
+    )
+    .bind(id)
+    .bind(owner_id);
 }
 
-pub fn upload_item_image(id: String, path: String) -> Query<'static, Postgres, PgArguments> {
-    return query("UPDATE items SET image = $1 WHERE id = $2")
-        .bind(path)
-        .bind(id);
+pub fn upload_item_image(
+    id: String,
+    image: String,
+    owner_id: String,
+) -> Query<'static, Postgres, PgArguments> {
+    return query(
+        "
+        UPDATE i SET i.image = $1 FROM items i 
+        JOIN restaurants r ON i.rest_id = r.id 
+        WHERE i.id = $2 AND r.owner_id = $3
+        ",
+    )
+    .bind(image)
+    .bind(id)
+    .bind(owner_id);
 }
 
-pub fn get_orders(rest_id: String, since: f32) -> Query<'static, Postgres, PgArguments> {
+pub fn get_orders(
+    rest_id: String,
+    since: f32,
+    owner_id: String,
+) -> Query<'static, Postgres, PgArguments> {
     return query(
         "
         SELECT o.id, i.name, o.requested_at, o.completed, o.table_number, o.description 
-        FROM orders as o JOIN items as i ON o.item_id = i.id 
-        WHERE i.rest_id = $1 AND o.requested_at >= $2
+        FROM orders o 
+        JOIN items i ON o.item_id = i.id 
+        JOIN restaurants r ON i.rest_id = r.id
+        WHERE i.rest_id = $1 
+        AND r.owner_id = $2 
+        AND o.requested_at >= $3
         ",
     )
     .bind(rest_id)
+    .bind(owner_id)
     .bind(since);
 }
 
@@ -126,6 +172,15 @@ pub fn insert_order(
         .bind(description);
 }
 
-pub fn complete_order(id: String) -> Query<'static, Postgres, PgArguments> {
-    return query("UPDATE orders SET completed = TRUE WHERE id = $1").bind(id);
+pub fn complete_order(id: String, owner_id: String) -> Query<'static, Postgres, PgArguments> {
+    return query(
+        "
+        UPDATE o SET o.completed = TRUE FROM orders o 
+        JOIN items i ON o.item_id = i.id 
+        JOIN restaurants r ON i.rest_id = r.id 
+        WHERE o.id = $1 AND r.owner_id = $2
+        ",
+    )
+    .bind(id)
+    .bind(owner_id);
 }

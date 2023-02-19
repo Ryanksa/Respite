@@ -31,7 +31,6 @@ pub struct AuthService {
 }
 
 impl AuthService {
-    #[allow(dead_code)]
     pub fn new(pool: Arc<Pool<Postgres>>, jwt_secret: String) -> Self {
         AuthService {
             pool: pool,
@@ -84,7 +83,7 @@ impl Auth for AuthService {
             .await;
 
         if let Err(err) = db_result {
-            log::error!("Auth Service: {}", err);
+            log::warn!("Auth Service: {}", err);
             return Err(Status::new(Code::NotFound, ""));
         }
         let row = db_result.unwrap();
@@ -98,7 +97,7 @@ impl Auth for AuthService {
         let parsed_hash = password_hash.unwrap();
         let argon2 = Argon2::default();
         if let Err(err) = argon2.verify_password(req.password.as_bytes(), &parsed_hash) {
-            log::error!("Auth Service: {}", err);
+            log::warn!("Auth Service: {}", err);
             return Err(Status::new(Code::PermissionDenied, ""));
         };
 
@@ -139,7 +138,7 @@ impl Auth for AuthService {
         ) {
             Ok(data) => data,
             Err(err) => {
-                log::error!("Auth Service: {}", err);
+                log::warn!("Auth Service: {}", err);
                 return Err(Status::new(Code::PermissionDenied, ""));
             }
         };

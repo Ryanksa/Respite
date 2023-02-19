@@ -13,14 +13,14 @@ message Restaurant {
   string id = 1;
   string name = 2;
   string description = 3;
-  string ownerId = 4;
-  string logo = 5;
+  string logo = 4;
 }
 
 message CreateRestaurantRequest {
   string ownerId = 1;
   string name = 2;
   string description = 3;
+  bytes image = 4;
 }
 
 message CreateRestaurantResponse {
@@ -29,6 +29,7 @@ message CreateRestaurantResponse {
 
 message DeleteRestaurantRequest {
   string restId = 1;
+  string ownerId = 2;
 }
 
 message DeleteRestaurantResponse {
@@ -38,6 +39,7 @@ message DeleteRestaurantResponse {
 message UploadRestaurantLogoRequest {
   string restId = 1;
   bytes image = 2;
+  string ownerId = 3;
 }
 
 message UploadRestaurantLogoResponse {

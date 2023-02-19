@@ -14,8 +14,8 @@ message Item {
   string name = 2;
   string description = 3;
   string category = 4;
-  string restId = 5;
-  string image = 6;
+  string image = 5;
+  string restId = 6;
 }
 
 message AddItemRequest {
@@ -23,6 +23,8 @@ message AddItemRequest {
   string name = 2;
   string description = 3;
   string category = 4;
+  bytes image = 5;
+  string ownerId = 6;
 }
 
 message AddItemResponse {
@@ -31,6 +33,7 @@ message AddItemResponse {
 
 message RemoveItemRequest {
   string itemId = 1;
+  string ownerId = 2;
 }
 
 message RemoveItemResponse {
@@ -40,6 +43,7 @@ message RemoveItemResponse {
 message UploadItemImageRequest {
   string itemId = 1;
   bytes image = 2;
+  string ownerId = 3;
 }
 
 message UploadItemImageResponse {

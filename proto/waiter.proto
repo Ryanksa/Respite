@@ -28,6 +28,7 @@ message MakeOrderResponse {
 
 message CompleteOrderRequest {
   string orderId = 1;
+  string ownerId = 2;
 }
 
 message CompleteOrderResponse {
@@ -37,4 +38,5 @@ message CompleteOrderResponse {
 message GetOrdersRequest {
   string restId = 1;
   float since = 2;
+  string ownerId = 3;
 }

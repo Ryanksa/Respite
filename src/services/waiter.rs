@@ -22,7 +22,6 @@ pub struct WaiterService {
 }
 
 impl WaiterService {
-    #[allow(dead_code)]
     pub fn new(pool: Arc<Pool<Postgres>>) -> Self {
         WaiterService { pool: pool }
     }
@@ -73,7 +72,7 @@ impl Waiter for WaiterService {
     ) -> Result<Response<CompleteOrderResponse>, Status> {
         let req = request.into_inner();
 
-        let db_result = complete_order(req.order_id)
+        let db_result = complete_order(req.order_id, req.owner_id)
             .execute(self.pool.as_ref())
             .await;
 
@@ -98,7 +97,7 @@ impl Waiter for WaiterService {
         let pool = self.pool.clone();
 
         tokio::spawn(async move {
-            let mut db_stream = get_orders(req.rest_id, req.since)
+            let mut db_stream = get_orders(req.rest_id, req.since, req.owner_id)
                 .map(|row| Order {
                     id: row.get("id"),
                     item_name: row.get("name"),

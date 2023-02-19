@@ -5,6 +5,7 @@ RUN apt-get install --no-install-recommends --assume-yes protobuf-compiler
 
 WORKDIR /app
 COPY . .
+RUN mkdir ./img
 
 ARG service
 ENV service=$service

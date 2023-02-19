@@ -1,4 +1,4 @@
-use lib::db::{delete_item, get_item, get_items, insert_item, upload_item_image};
+use lib::db::{delete_item, get_item, get_items, get_restaurant, insert_item, upload_item_image};
 use menu_proto::menu_server::Menu;
 use menu_proto::{
     AddItemRequest, AddItemResponse, GetItemRequest, GetItemResponse, GetItemsRequest,
@@ -20,7 +20,6 @@ pub struct MenuService {
 }
 
 impl MenuService {
-    #[allow(dead_code)]
     pub fn new(pool: Arc<Pool<Postgres>>) -> Self {
         MenuService { pool: pool }
     }
@@ -34,21 +33,33 @@ impl Menu for MenuService {
     ) -> Result<Response<AddItemResponse>, Status> {
         let req = request.into_inner();
         let item_id = Uuid::new_v4();
+        let path = format!("./img/{}", item_id.to_string());
 
         let db_result = insert_item(
             item_id.to_string(),
             req.name,
             req.description,
             req.category,
+            path.clone(),
             req.rest_id,
+            req.owner_id,
         )
         .execute(self.pool.as_ref())
         .await;
 
         let res = match db_result {
-            Ok(_) => AddItemResponse {
-                item_id: item_id.to_string(),
-            },
+            Ok(result) => {
+                if result.rows_affected() == 0 {
+                    return Err(Status::new(Code::PermissionDenied, ""));
+                }
+                if let Err(err) = fs::write(path, req.image) {
+                    log::error!("Menu Service: {}", err);
+                    return Err(Status::new(Code::Internal, ""));
+                };
+                AddItemResponse {
+                    item_id: item_id.to_string(),
+                }
+            }
             Err(err) => {
                 log::error!("Menu Service: {}", err);
                 return Err(Status::new(Code::Internal, ""));
@@ -62,27 +73,22 @@ impl Menu for MenuService {
         request: Request<RemoveItemRequest>,
     ) -> Result<Response<RemoveItemResponse>, Status> {
         let req = request.into_inner();
+        let image_path = format!("./img/{}", req.item_id.clone());
 
-        match get_item(req.item_id.clone())
-            .fetch_one(self.pool.as_ref())
-            .await
-        {
-            Ok(row) => {
-                let image_path: String = row.get("image");
+        let db_result = delete_item(req.item_id, req.owner_id)
+            .execute(self.pool.as_ref())
+            .await;
+
+        let res = match db_result {
+            Ok(result) => {
+                if result.rows_affected() == 0 {
+                    return Err(Status::new(Code::NotFound, ""));
+                }
                 if let Err(err) = fs::remove_file(image_path) {
                     log::warn!("Menu Service: {}", err);
                 }
+                RemoveItemResponse { success: true }
             }
-            Err(err) => {
-                log::error!("Menu Service: {}", err);
-                return Err(Status::new(Code::NotFound, ""));
-            }
-        }
-
-        let db_result = delete_item(req.item_id).execute(self.pool.as_ref()).await;
-
-        let res = match db_result {
-            Ok(_) => RemoveItemResponse { success: true },
             Err(err) => {
                 log::error!("Menu Service: {}", err);
                 return Err(Status::new(Code::Internal, ""));
@@ -98,17 +104,21 @@ impl Menu for MenuService {
         let req = request.into_inner();
         let path = format!("./img/{}", req.item_id);
 
-        if let Err(err) = fs::write(path.clone(), req.image) {
-            log::error!("Menu Service: {}", err);
-            return Err(Status::new(Code::Internal, ""));
-        };
-
-        let db_result = upload_item_image(req.item_id, path)
+        let db_result = upload_item_image(req.item_id, path.clone(), req.owner_id)
             .execute(self.pool.as_ref())
             .await;
 
         let res = match db_result {
-            Ok(_) => UploadItemImageResponse { success: true },
+            Ok(result) => {
+                if result.rows_affected() == 0 {
+                    return Err(Status::new(Code::NotFound, ""));
+                }
+                if let Err(err) = fs::write(path, req.image) {
+                    log::error!("Menu Service: {}", err);
+                    return Err(Status::new(Code::Internal, ""));
+                };
+                UploadItemImageResponse { success: true }
+            }
             Err(err) => {
                 log::error!("Menu Service: {}", err);
                 return Err(Status::new(Code::Internal, ""));
@@ -129,8 +139,8 @@ impl Menu for MenuService {
                 name: row.get("name"),
                 description: row.get("description"),
                 category: row.get("category"),
-                rest_id: row.get("rest_id"),
                 image: row.get("image"),
+                rest_id: row.get("rest_id"),
             })
             .fetch_one(self.pool.as_ref())
             .await;
@@ -157,8 +167,8 @@ impl Menu for MenuService {
                 name: row.get("name"),
                 description: row.get("description"),
                 category: row.get("category"),
-                rest_id: row.get("rest_id"),
                 image: row.get("image"),
+                rest_id: row.get("rest_id"),
             })
             .fetch_all(self.pool.as_ref())
             .await;
