@@ -22,6 +22,7 @@ pub struct WaiterService {
 }
 
 impl WaiterService {
+    #[allow(dead_code)]
     pub fn new(pool: Arc<Pool<Postgres>>) -> Self {
         WaiterService { pool: pool }
     }
@@ -109,7 +110,9 @@ impl Waiter for WaiterService {
                 .fetch(pool.as_ref());
 
             while let Ok(Some(order)) = db_stream.try_next().await {
-                tx.send(Ok(order.clone())).await;
+                if let Err(err) = tx.send(Ok(order.clone())).await {
+                    log::warn!("Waiter Service: {}", err);
+                }
             }
         });
 

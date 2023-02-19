@@ -31,6 +31,7 @@ pub struct AuthService {
 }
 
 impl AuthService {
+    #[allow(dead_code)]
     pub fn new(pool: Arc<Pool<Postgres>>, jwt_secret: String) -> Self {
         AuthService {
             pool: pool,

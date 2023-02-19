@@ -26,6 +26,7 @@ pub struct StoreService {
 }
 
 impl StoreService {
+    #[allow(dead_code)]
     pub fn new(pool: Arc<Pool<Postgres>>) -> Self {
         StoreService { pool: pool }
     }
@@ -67,6 +68,22 @@ impl Store for StoreService {
         request: Request<RemoveItemRequest>,
     ) -> Result<Response<RemoveItemResponse>, Status> {
         let req = request.into_inner();
+
+        match get_item(req.item_id.clone())
+            .fetch_one(self.pool.as_ref())
+            .await
+        {
+            Ok(row) => {
+                let image_path: String = row.get("image");
+                if let Err(err) = fs::remove_file(image_path) {
+                    log::warn!("Store Service: {}", err);
+                }
+            }
+            Err(err) => {
+                log::error!("Store Service: {}", err);
+                return Err(Status::new(Code::NotFound, ""));
+            }
+        }
 
         let db_result = delete_item(req.item_id).execute(self.pool.as_ref()).await;
 
@@ -191,6 +208,22 @@ impl Store for StoreService {
         request: Request<DeleteRestaurantRequest>,
     ) -> Result<Response<DeleteRestaurantResponse>, Status> {
         let req = request.into_inner();
+
+        match get_restaurant(req.rest_id.clone())
+            .fetch_one(self.pool.as_ref())
+            .await
+        {
+            Ok(row) => {
+                let logo_path: String = row.get("logo");
+                if let Err(err) = fs::remove_file(logo_path) {
+                    log::warn!("Store Service: {}", err);
+                }
+            }
+            Err(err) => {
+                log::error!("Store Service: {}", err);
+                return Err(Status::new(Code::NotFound, ""));
+            }
+        }
 
         let db_result = delete_restaurant(req.rest_id)
             .execute(self.pool.as_ref())
