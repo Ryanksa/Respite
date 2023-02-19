@@ -1,6 +1,10 @@
-use lib::db::get_pool_grpc;
-use sqlx::{query, Row};
+use lib::db::{
+    delete_item, delete_restaurant, get_item, get_items, get_restaurant, get_restaurants,
+    insert_item, insert_restaurant, upload_item_image, upload_restaurant_logo,
+};
+use sqlx::{Pool, Postgres, Row};
 use std::fs;
+use std::sync::Arc;
 use store_proto::store_server::Store;
 use store_proto::{
     AddItemRequest, AddItemResponse, CreateRestaurantRequest, CreateRestaurantResponse,
@@ -17,8 +21,15 @@ pub mod store_proto {
     tonic::include_proto!("store");
 }
 
-#[derive(Debug, Default)]
-pub struct StoreService {}
+pub struct StoreService {
+    pool: Arc<Pool<Postgres>>,
+}
+
+impl StoreService {
+    pub fn new(pool: Arc<Pool<Postgres>>) -> Self {
+        StoreService { pool: pool }
+    }
+}
 
 #[tonic::async_trait]
 impl Store for StoreService {
@@ -29,15 +40,15 @@ impl Store for StoreService {
         let req = request.into_inner();
         let item_id = Uuid::new_v4();
 
-        let pool = get_pool_grpc().await?;
-        let db_result = query("INSERT INTO items VALUES ($1, $2, $3, $4, $5)")
-            .bind(item_id.to_string())
-            .bind(req.name)
-            .bind(req.description)
-            .bind(req.category)
-            .bind(req.rest_id)
-            .execute(pool.as_ref())
-            .await;
+        let db_result = insert_item(
+            item_id.to_string(),
+            req.name,
+            req.description,
+            req.category,
+            req.rest_id,
+        )
+        .execute(self.pool.as_ref())
+        .await;
 
         let res = match db_result {
             Ok(_) => AddItemResponse {
@@ -54,11 +65,7 @@ impl Store for StoreService {
     ) -> Result<Response<RemoveItemResponse>, Status> {
         let req = request.into_inner();
 
-        let pool = get_pool_grpc().await?;
-        let db_result = query("DELETE FROM items WHERE id = $1")
-            .bind(req.item_id)
-            .execute(pool.as_ref())
-            .await;
+        let db_result = delete_item(req.item_id).execute(self.pool.as_ref()).await;
 
         let res = match db_result {
             Ok(_) => RemoveItemResponse { success: true },
@@ -78,11 +85,8 @@ impl Store for StoreService {
             return Err(Status::new(Code::Internal, format!("{}", err)));
         };
 
-        let pool = get_pool_grpc().await?;
-        let db_result = query("UPDATE items SET image = $1 WHERE id = $2")
-            .bind(path)
-            .bind(req.item_id)
-            .execute(pool.as_ref())
+        let db_result = upload_item_image(req.item_id, path)
+            .execute(self.pool.as_ref())
             .await;
 
         let res = match db_result {
@@ -98,9 +102,7 @@ impl Store for StoreService {
     ) -> Result<Response<GetItemResponse>, Status> {
         let req = request.into_inner();
 
-        let pool = get_pool_grpc().await?;
-        let db_result = query("SELECT * FROM items WHERE id = $1")
-            .bind(req.item_id)
+        let db_result = get_item(req.item_id)
             .map(|row| Item {
                 id: row.get("id"),
                 name: row.get("name"),
@@ -109,7 +111,7 @@ impl Store for StoreService {
                 rest_id: row.get("rest_id"),
                 image: row.get("image"),
             })
-            .fetch_one(pool.as_ref())
+            .fetch_one(self.pool.as_ref())
             .await;
 
         let res = match db_result {
@@ -125,21 +127,17 @@ impl Store for StoreService {
     ) -> Result<Response<GetItemsResponse>, Status> {
         let req = request.into_inner();
 
-        let pool = get_pool_grpc().await?;
-        let db_result =
-            query("SELECT * FROM items WHERE rest_id = $1 AND ($2 = '' OR category = $2)")
-                .bind(req.rest_id)
-                .bind(req.category)
-                .map(|row| Item {
-                    id: row.get("id"),
-                    name: row.get("name"),
-                    description: row.get("description"),
-                    category: row.get("category"),
-                    rest_id: row.get("rest_id"),
-                    image: row.get("image"),
-                })
-                .fetch_all(pool.as_ref())
-                .await;
+        let db_result = get_items(req.rest_id, req.category)
+            .map(|row| Item {
+                id: row.get("id"),
+                name: row.get("name"),
+                description: row.get("description"),
+                category: row.get("category"),
+                rest_id: row.get("rest_id"),
+                image: row.get("image"),
+            })
+            .fetch_all(self.pool.as_ref())
+            .await;
 
         let res = match db_result {
             Ok(items) => GetItemsResponse { items: items },
@@ -155,14 +153,10 @@ impl Store for StoreService {
         let req = request.into_inner();
         let rest_id = Uuid::new_v4();
 
-        let pool = get_pool_grpc().await?;
-        let db_result = query("INSERT INTO restaurants VALUES ($1, $2, $3, $4)")
-            .bind(rest_id.to_string())
-            .bind(req.name)
-            .bind(req.description)
-            .bind(req.owner_id)
-            .execute(pool.as_ref())
-            .await;
+        let db_result =
+            insert_restaurant(rest_id.to_string(), req.name, req.description, req.owner_id)
+                .execute(self.pool.as_ref())
+                .await;
 
         let res = match db_result {
             Ok(_) => CreateRestaurantResponse {
@@ -179,10 +173,8 @@ impl Store for StoreService {
     ) -> Result<Response<DeleteRestaurantResponse>, Status> {
         let req = request.into_inner();
 
-        let pool = get_pool_grpc().await?;
-        let db_result = query("DELETE FROM restaurants WHERE id = $1")
-            .bind(req.rest_id)
-            .execute(pool.as_ref())
+        let db_result = delete_restaurant(req.rest_id)
+            .execute(self.pool.as_ref())
             .await;
 
         let res = match db_result {
@@ -203,11 +195,8 @@ impl Store for StoreService {
             return Err(Status::new(Code::Internal, format!("{}", err)));
         };
 
-        let pool = get_pool_grpc().await?;
-        let db_result = query("UPDATE restaurants SET image = $1 WHERE id = $2")
-            .bind(path)
-            .bind(req.rest_id)
-            .execute(pool.as_ref())
+        let db_result = upload_restaurant_logo(req.rest_id, path)
+            .execute(self.pool.as_ref())
             .await;
 
         let res = match db_result {
@@ -223,9 +212,7 @@ impl Store for StoreService {
     ) -> Result<Response<GetRestaurantResponse>, Status> {
         let req = request.into_inner();
 
-        let pool = get_pool_grpc().await?;
-        let db_result = query("SELECT * FROM restaurants WHERE id = $1")
-            .bind(req.rest_id)
+        let db_result = get_restaurant(req.rest_id)
             .map(|row| Restaurant {
                 id: row.get("id"),
                 name: row.get("name"),
@@ -233,7 +220,7 @@ impl Store for StoreService {
                 owner_id: row.get("owner_id"),
                 logo: row.get("logo"),
             })
-            .fetch_one(pool.as_ref())
+            .fetch_one(self.pool.as_ref())
             .await;
 
         let res = match db_result {
@@ -251,9 +238,7 @@ impl Store for StoreService {
     ) -> Result<Response<GetRestaurantsResponse>, Status> {
         let req = request.into_inner();
 
-        let pool = get_pool_grpc().await?;
-        let db_result = query("SELECT * FROM restaurants WHERE owner_id = $1")
-            .bind(req.owner_id)
+        let db_result = get_restaurants(req.owner_id)
             .map(|row| Restaurant {
                 id: row.get("id"),
                 name: row.get("name"),
@@ -261,7 +246,7 @@ impl Store for StoreService {
                 owner_id: row.get("owner_id"),
                 logo: row.get("logo"),
             })
-            .fetch_all(pool.as_ref())
+            .fetch_all(self.pool.as_ref())
             .await;
 
         let res = match db_result {

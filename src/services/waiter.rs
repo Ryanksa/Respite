@@ -1,5 +1,6 @@
-use lib::db::get_pool_grpc;
-use sqlx::{query, Row};
+use lib::db::{complete_order, get_orders, insert_order};
+use sqlx::{Pool, Postgres, Row};
+use std::sync::Arc;
 use std::time::{SystemTime, UNIX_EPOCH};
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::ReceiverStream;
@@ -16,8 +17,15 @@ pub mod waiter_proto {
     tonic::include_proto!("waiter");
 }
 
-#[derive(Debug, Default)]
-pub struct WaiterService {}
+pub struct WaiterService {
+    pool: Arc<Pool<Postgres>>,
+}
+
+impl WaiterService {
+    pub fn new(pool: Arc<Pool<Postgres>>) -> Self {
+        WaiterService { pool: pool }
+    }
+}
 
 #[tonic::async_trait]
 impl Waiter for WaiterService {
@@ -32,16 +40,16 @@ impl Waiter for WaiterService {
             Err(err) => return Err(Status::new(Code::Internal, format!("{}", err))),
         };
 
-        let pool = get_pool_grpc().await?;
-        let db_result = query("INSERT INTO orders VALUES ($1, $2, $3, $4, $5, $6)")
-            .bind(order_id.to_string())
-            .bind(req.item_id)
-            .bind(now.as_secs() as i64)
-            .bind(false)
-            .bind(req.table_number)
-            .bind(req.description)
-            .execute(pool.as_ref())
-            .await;
+        let db_result = insert_order(
+            order_id.to_string(),
+            req.item_id,
+            now.as_secs() as f32,
+            false,
+            req.table_number,
+            req.description,
+        )
+        .execute(self.pool.as_ref())
+        .await;
 
         let res = match db_result {
             Ok(_) => MakeOrderResponse {
@@ -58,10 +66,8 @@ impl Waiter for WaiterService {
     ) -> Result<Response<CompleteOrderResponse>, Status> {
         let req = request.into_inner();
 
-        let pool = get_pool_grpc().await?;
-        let db_result = query("UPDATE orders SET completed = TRUE WHERE id = $1")
-            .bind(req.order_id)
-            .execute(pool.as_ref())
+        let db_result = complete_order(req.order_id)
+            .execute(self.pool.as_ref())
             .await;
 
         let res = match db_result {
@@ -79,27 +85,19 @@ impl Waiter for WaiterService {
     ) -> Result<Response<Self::getOrdersStream>, Status> {
         let req = request.into_inner();
         let (tx, rx) = mpsc::channel(3);
-        let pool = get_pool_grpc().await?;
+        let pool = self.pool.clone();
 
         tokio::spawn(async move {
-            let mut db_stream = query(
-                "
-                SELECT o.id, i.name, o.requested_at, o.completed, o.table_number, o.description 
-                FROM orders as o JOIN items as i ON o.item_id = i.id 
-                WHERE i.rest_id = $1 AND o.requested_at >= $2
-                ",
-            )
-            .bind(req.rest_id)
-            .bind(req.since)
-            .map(|row| Order {
-                id: row.get("id"),
-                item_name: row.get("name"),
-                requested_at: row.get("requested_at"),
-                completed: row.get("completed"),
-                table_number: row.get("table_number"),
-                description: row.get("description"),
-            })
-            .fetch(pool.as_ref());
+            let mut db_stream = get_orders(req.rest_id, req.since)
+                .map(|row| Order {
+                    id: row.get("id"),
+                    item_name: row.get("name"),
+                    requested_at: row.get("requested_at"),
+                    completed: row.get("completed"),
+                    table_number: row.get("table_number"),
+                    description: row.get("description"),
+                })
+                .fetch(pool.as_ref());
 
             while let Ok(Some(order)) = db_stream.try_next().await {
                 tx.send(Ok(order.clone())).await;

@@ -9,9 +9,10 @@ use auth_proto::{
 };
 use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation};
 use lib::config::Config;
-use lib::db::get_pool_grpc;
+use lib::db::{get_owner_by_email, get_owner_by_id, insert_owner};
 use serde::{Deserialize, Serialize};
-use sqlx::{query, Row};
+use sqlx::{Pool, Postgres, Row};
+use std::sync::Arc;
 use tonic::{Code, Request, Response, Status};
 use uuid::Uuid;
 
@@ -25,8 +26,15 @@ struct JWTOwner {
     email: String,
 }
 
-#[derive(Debug, Default)]
-pub struct AuthService {}
+pub struct AuthService {
+    pool: Arc<Pool<Postgres>>,
+}
+
+impl AuthService {
+    pub fn new(pool: Arc<Pool<Postgres>>) -> Self {
+        AuthService { pool: pool }
+    }
+}
 
 #[tonic::async_trait]
 impl Auth for AuthService {
@@ -44,12 +52,8 @@ impl Auth for AuthService {
             Err(err) => return Err(Status::new(Code::Internal, format!("{}", err))),
         };
 
-        let pool = get_pool_grpc().await?;
-        let db_result = query("INSERT INTO owners VALUES ($1, $2, $3)")
-            .bind(owner_id.to_string())
-            .bind(req.email)
-            .bind(salted_hash)
-            .execute(pool.as_ref())
+        let db_result = insert_owner(owner_id.to_string(), req.email, salted_hash)
+            .execute(self.pool.as_ref())
             .await;
 
         let res = match db_result {
@@ -66,10 +70,8 @@ impl Auth for AuthService {
         let req = request.into_inner();
         let jwt_secret = Config::new().jwt_secret;
 
-        let pool = get_pool_grpc().await?;
-        let db_result = query("SELECT * FROM owners WHERE email = $1")
-            .bind(req.email)
-            .fetch_one(pool.as_ref())
+        let db_result = get_owner_by_email(req.email)
+            .fetch_one(self.pool.as_ref())
             .await;
 
         if let Err(_) = db_result {
@@ -125,14 +127,12 @@ impl Auth for AuthService {
             Err(_) => return Err(Status::new(Code::PermissionDenied, "")),
         };
 
-        let pool = get_pool_grpc().await?;
-        let db_result = query("SELECT * FROM owners WHERE id = $1")
-            .bind(token_data.claims.id)
+        let db_result = get_owner_by_id(token_data.claims.id)
             .map(|row| Owner {
                 id: row.get("id"),
                 email: row.get("email"),
             })
-            .fetch_one(pool.as_ref())
+            .fetch_one(self.pool.as_ref())
             .await;
 
         let res = match db_result {

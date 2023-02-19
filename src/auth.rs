@@ -1,6 +1,7 @@
 mod services;
 
 use lib::config::Config;
+use lib::db::create_pool;
 use services::auth::auth_proto::auth_server::AuthServer;
 use services::auth::AuthService;
 use tonic::transport::Server;
@@ -10,7 +11,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let config = Config::new();
     let addr = config.auth_uri.parse()?;
 
-    let auth_service = AuthService::default();
+    let auth_service = AuthService::new(create_pool().await?);
 
     Server::builder()
         .add_service(AuthServer::new(auth_service))
