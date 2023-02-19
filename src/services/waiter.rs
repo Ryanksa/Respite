@@ -37,7 +37,10 @@ impl Waiter for WaiterService {
         let order_id = Uuid::new_v4();
         let now = match SystemTime::now().duration_since(UNIX_EPOCH) {
             Ok(n) => n,
-            Err(err) => return Err(Status::new(Code::Internal, format!("{}", err))),
+            Err(err) => {
+                log::error!("Waiter Service: {}", err);
+                return Err(Status::new(Code::Internal, ""));
+            }
         };
 
         let db_result = insert_order(
@@ -55,7 +58,10 @@ impl Waiter for WaiterService {
             Ok(_) => MakeOrderResponse {
                 order_id: order_id.to_string(),
             },
-            Err(err) => return Err(Status::new(Code::Internal, format!("{}", err))),
+            Err(err) => {
+                log::error!("Waiter Service: {}", err);
+                return Err(Status::new(Code::Internal, ""));
+            }
         };
         Ok(Response::new(res))
     }
@@ -72,7 +78,10 @@ impl Waiter for WaiterService {
 
         let res = match db_result {
             Ok(_) => CompleteOrderResponse { success: true },
-            Err(err) => return Err(Status::new(Code::Internal, format!("{}", err))),
+            Err(err) => {
+                log::error!("Waiter Service: {}", err);
+                return Err(Status::new(Code::Internal, ""));
+            }
         };
         Ok(Response::new(res))
     }

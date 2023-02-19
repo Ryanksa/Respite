@@ -8,9 +8,10 @@ use tonic::transport::Server;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    env_logger::init();
+
     let config = Config::new();
     let addr = config.store_uri.parse()?;
-
     let store_service = StoreService::new(create_pool().await?);
 
     Server::builder()

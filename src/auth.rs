@@ -8,10 +8,11 @@ use tonic::transport::Server;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    env_logger::init();
+
     let config = Config::new();
     let addr = config.auth_uri.parse()?;
-
-    let auth_service = AuthService::new(create_pool().await?);
+    let auth_service = AuthService::new(create_pool().await?, config.jwt_secret);
 
     Server::builder()
         .add_service(AuthServer::new(auth_service))

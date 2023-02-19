@@ -54,7 +54,10 @@ impl Store for StoreService {
             Ok(_) => AddItemResponse {
                 item_id: item_id.to_string(),
             },
-            Err(err) => return Err(Status::new(Code::Internal, format!("{}", err))),
+            Err(err) => {
+                log::error!("Store Service: {}", err);
+                return Err(Status::new(Code::Internal, ""));
+            }
         };
         Ok(Response::new(res))
     }
@@ -69,7 +72,10 @@ impl Store for StoreService {
 
         let res = match db_result {
             Ok(_) => RemoveItemResponse { success: true },
-            Err(err) => return Err(Status::new(Code::Internal, format!("{}", err))),
+            Err(err) => {
+                log::error!("Store Service: {}", err);
+                return Err(Status::new(Code::Internal, ""));
+            }
         };
         Ok(Response::new(res))
     }
@@ -82,7 +88,8 @@ impl Store for StoreService {
         let path = format!("./img/{}", req.item_id);
 
         if let Err(err) = fs::write(path.clone(), req.image) {
-            return Err(Status::new(Code::Internal, format!("{}", err)));
+            log::error!("Store Service: {}", err);
+            return Err(Status::new(Code::Internal, ""));
         };
 
         let db_result = upload_item_image(req.item_id, path)
@@ -91,7 +98,10 @@ impl Store for StoreService {
 
         let res = match db_result {
             Ok(_) => UploadItemImageResponse { success: true },
-            Err(err) => return Err(Status::new(Code::Internal, format!("{}", err))),
+            Err(err) => {
+                log::error!("Store Service: {}", err);
+                return Err(Status::new(Code::Internal, ""));
+            }
         };
         Ok(Response::new(res))
     }
@@ -116,7 +126,10 @@ impl Store for StoreService {
 
         let res = match db_result {
             Ok(item) => GetItemResponse { item: Some(item) },
-            Err(err) => return Err(Status::new(Code::Internal, format!("{}", err))),
+            Err(err) => {
+                log::error!("Store Service: {}", err);
+                return Err(Status::new(Code::Internal, ""));
+            }
         };
         Ok(Response::new(res))
     }
@@ -141,7 +154,10 @@ impl Store for StoreService {
 
         let res = match db_result {
             Ok(items) => GetItemsResponse { items: items },
-            Err(err) => return Err(Status::new(Code::Internal, format!("{}", err))),
+            Err(err) => {
+                log::error!("Store Service: {}", err);
+                return Err(Status::new(Code::Internal, ""));
+            }
         };
         Ok(Response::new(res))
     }
@@ -162,7 +178,10 @@ impl Store for StoreService {
             Ok(_) => CreateRestaurantResponse {
                 rest_id: rest_id.to_string(),
             },
-            Err(err) => return Err(Status::new(Code::Internal, format!("{}", err))),
+            Err(err) => {
+                log::error!("Store Service: {}", err);
+                return Err(Status::new(Code::Internal, ""));
+            }
         };
         Ok(Response::new(res))
     }
@@ -179,7 +198,10 @@ impl Store for StoreService {
 
         let res = match db_result {
             Ok(_) => DeleteRestaurantResponse { success: true },
-            Err(err) => return Err(Status::new(Code::Internal, format!("{}", err))),
+            Err(err) => {
+                log::error!("Store Service: {}", err);
+                return Err(Status::new(Code::Internal, ""));
+            }
         };
         Ok(Response::new(res))
     }
@@ -192,7 +214,8 @@ impl Store for StoreService {
         let path = format!("./img/{}", req.rest_id);
 
         if let Err(err) = fs::write(path.clone(), req.image) {
-            return Err(Status::new(Code::Internal, format!("{}", err)));
+            log::error!("Store Service: {}", err);
+            return Err(Status::new(Code::Internal, ""));
         };
 
         let db_result = upload_restaurant_logo(req.rest_id, path)
@@ -201,7 +224,10 @@ impl Store for StoreService {
 
         let res = match db_result {
             Ok(_) => UploadRestaurantLogoResponse { success: true },
-            Err(err) => return Err(Status::new(Code::Internal, format!("{}", err))),
+            Err(err) => {
+                log::error!("Store Service: {}", err);
+                return Err(Status::new(Code::Internal, ""));
+            }
         };
         Ok(Response::new(res))
     }
@@ -227,7 +253,10 @@ impl Store for StoreService {
             Ok(restaurant) => GetRestaurantResponse {
                 restaurant: Some(restaurant),
             },
-            Err(err) => return Err(Status::new(Code::Internal, format!("{}", err))),
+            Err(err) => {
+                log::error!("Store Service: {}", err);
+                return Err(Status::new(Code::Internal, ""));
+            }
         };
         Ok(Response::new(res))
     }
@@ -253,7 +282,10 @@ impl Store for StoreService {
             Ok(restaurants) => GetRestaurantsResponse {
                 restaurants: restaurants,
             },
-            Err(err) => return Err(Status::new(Code::Internal, format!("{}", err))),
+            Err(err) => {
+                log::error!("Store Service: {}", err);
+                return Err(Status::new(Code::Internal, ""));
+            }
         };
         Ok(Response::new(res))
     }
