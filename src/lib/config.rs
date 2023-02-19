@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use std::fs;
+use std::{env, fs};
 
 #[derive(Serialize, Deserialize)]
 pub struct Config {
@@ -14,16 +14,16 @@ pub struct Config {
 impl Config {
     pub fn new() -> Self {
         let content = fs::read_to_string("./Config.toml").unwrap_or_default();
-        let config: Config = toml::from_str(&content).unwrap_or_else(|_| {
-            println!("Config.toml not found...");
-            Config {
-                auth_uri: "".to_owned(),
-                store_uri: "".to_owned(),
-                waiter_uri: "".to_owned(),
-                db_uri: "".to_owned(),
-                db_pool_size: 0,
-                jwt_secret: "".to_owned(),
-            }
+        let config: Config = toml::from_str(&content).unwrap_or_else(|_| Config {
+            auth_uri: env::var("auth_uri").unwrap_or_default(),
+            store_uri: env::var("store_uri").unwrap_or_default(),
+            waiter_uri: env::var("waiter_uri").unwrap_or_default(),
+            db_uri: env::var("db_uri").unwrap_or_default(),
+            db_pool_size: env::var("db_pool_size")
+                .unwrap_or_default()
+                .parse()
+                .unwrap_or_default(),
+            jwt_secret: env::var("jwt_secret").unwrap_or_default(),
         });
         return config;
     }

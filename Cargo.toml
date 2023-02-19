@@ -10,15 +10,15 @@ name = "lib"
 path = "src/lib/lib.rs"
 
 [[bin]]
-name = "store-server"
+name = "store"
 path = "src/store.rs"
 
 [[bin]]
-name = "waiter-server"
+name = "waiter"
 path = "src/waiter.rs"
 
 [[bin]]
-name = "auth-server"
+name = "auth"
 path = "src/auth.rs"
 
 [dependencies]
