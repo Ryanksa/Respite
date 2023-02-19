@@ -1,18 +1,14 @@
 use lib::db::{
-    delete_item, delete_restaurant, get_item, get_items, get_restaurant, get_restaurants,
-    insert_item, insert_restaurant, upload_item_image, upload_restaurant_logo,
+    delete_restaurant, get_restaurant, get_restaurants, insert_restaurant, upload_restaurant_logo,
 };
 use sqlx::{Pool, Postgres, Row};
 use std::fs;
 use std::sync::Arc;
 use store_proto::store_server::Store;
 use store_proto::{
-    AddItemRequest, AddItemResponse, CreateRestaurantRequest, CreateRestaurantResponse,
-    DeleteRestaurantRequest, DeleteRestaurantResponse, GetItemRequest, GetItemResponse,
-    GetItemsRequest, GetItemsResponse, GetRestaurantRequest, GetRestaurantResponse,
-    GetRestaurantsRequest, GetRestaurantsResponse, Item, RemoveItemRequest, RemoveItemResponse,
-    Restaurant, UploadItemImageRequest, UploadItemImageResponse, UploadRestaurantLogoRequest,
-    UploadRestaurantLogoResponse,
+    CreateRestaurantRequest, CreateRestaurantResponse, DeleteRestaurantRequest,
+    DeleteRestaurantResponse, GetRestaurantRequest, GetRestaurantResponse, GetRestaurantsRequest,
+    GetRestaurantsResponse, Restaurant, UploadRestaurantLogoRequest, UploadRestaurantLogoResponse,
 };
 use tonic::{Code, Request, Response, Status};
 use uuid::Uuid;
@@ -34,151 +30,6 @@ impl StoreService {
 
 #[tonic::async_trait]
 impl Store for StoreService {
-    async fn add_item(
-        &self,
-        request: Request<AddItemRequest>,
-    ) -> Result<Response<AddItemResponse>, Status> {
-        let req = request.into_inner();
-        let item_id = Uuid::new_v4();
-
-        let db_result = insert_item(
-            item_id.to_string(),
-            req.name,
-            req.description,
-            req.category,
-            req.rest_id,
-        )
-        .execute(self.pool.as_ref())
-        .await;
-
-        let res = match db_result {
-            Ok(_) => AddItemResponse {
-                item_id: item_id.to_string(),
-            },
-            Err(err) => {
-                log::error!("Store Service: {}", err);
-                return Err(Status::new(Code::Internal, ""));
-            }
-        };
-        Ok(Response::new(res))
-    }
-
-    async fn remove_item(
-        &self,
-        request: Request<RemoveItemRequest>,
-    ) -> Result<Response<RemoveItemResponse>, Status> {
-        let req = request.into_inner();
-
-        match get_item(req.item_id.clone())
-            .fetch_one(self.pool.as_ref())
-            .await
-        {
-            Ok(row) => {
-                let image_path: String = row.get("image");
-                if let Err(err) = fs::remove_file(image_path) {
-                    log::warn!("Store Service: {}", err);
-                }
-            }
-            Err(err) => {
-                log::error!("Store Service: {}", err);
-                return Err(Status::new(Code::NotFound, ""));
-            }
-        }
-
-        let db_result = delete_item(req.item_id).execute(self.pool.as_ref()).await;
-
-        let res = match db_result {
-            Ok(_) => RemoveItemResponse { success: true },
-            Err(err) => {
-                log::error!("Store Service: {}", err);
-                return Err(Status::new(Code::Internal, ""));
-            }
-        };
-        Ok(Response::new(res))
-    }
-
-    async fn upload_item_image(
-        &self,
-        request: Request<UploadItemImageRequest>,
-    ) -> Result<Response<UploadItemImageResponse>, Status> {
-        let req = request.into_inner();
-        let path = format!("./img/{}", req.item_id);
-
-        if let Err(err) = fs::write(path.clone(), req.image) {
-            log::error!("Store Service: {}", err);
-            return Err(Status::new(Code::Internal, ""));
-        };
-
-        let db_result = upload_item_image(req.item_id, path)
-            .execute(self.pool.as_ref())
-            .await;
-
-        let res = match db_result {
-            Ok(_) => UploadItemImageResponse { success: true },
-            Err(err) => {
-                log::error!("Store Service: {}", err);
-                return Err(Status::new(Code::Internal, ""));
-            }
-        };
-        Ok(Response::new(res))
-    }
-
-    async fn get_item(
-        &self,
-        request: Request<GetItemRequest>,
-    ) -> Result<Response<GetItemResponse>, Status> {
-        let req = request.into_inner();
-
-        let db_result = get_item(req.item_id)
-            .map(|row| Item {
-                id: row.get("id"),
-                name: row.get("name"),
-                description: row.get("description"),
-                category: row.get("category"),
-                rest_id: row.get("rest_id"),
-                image: row.get("image"),
-            })
-            .fetch_one(self.pool.as_ref())
-            .await;
-
-        let res = match db_result {
-            Ok(item) => GetItemResponse { item: Some(item) },
-            Err(err) => {
-                log::error!("Store Service: {}", err);
-                return Err(Status::new(Code::Internal, ""));
-            }
-        };
-        Ok(Response::new(res))
-    }
-
-    async fn get_items(
-        &self,
-        request: Request<GetItemsRequest>,
-    ) -> Result<Response<GetItemsResponse>, Status> {
-        let req = request.into_inner();
-
-        let db_result = get_items(req.rest_id, req.category)
-            .map(|row| Item {
-                id: row.get("id"),
-                name: row.get("name"),
-                description: row.get("description"),
-                category: row.get("category"),
-                rest_id: row.get("rest_id"),
-                image: row.get("image"),
-            })
-            .fetch_all(self.pool.as_ref())
-            .await;
-
-        let res = match db_result {
-            Ok(items) => GetItemsResponse { items: items },
-            Err(err) => {
-                log::error!("Store Service: {}", err);
-                return Err(Status::new(Code::Internal, ""));
-            }
-        };
-        Ok(Response::new(res))
-    }
-
     async fn create_restaurant(
         &self,
         request: Request<CreateRestaurantRequest>,

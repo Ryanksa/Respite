@@ -10,16 +10,20 @@ name = "lib"
 path = "src/lib/lib.rs"
 
 [[bin]]
+name = "auth"
+path = "src/auth.rs"
+
+[[bin]]
 name = "store"
 path = "src/store.rs"
 
 [[bin]]
-name = "waiter"
-path = "src/waiter.rs"
+name = "menu"
+path = "src/menu.rs"
 
 [[bin]]
-name = "auth"
-path = "src/auth.rs"
+name = "waiter"
+path = "src/waiter.rs"
 
 [dependencies]
 toml  = "0.7.1"

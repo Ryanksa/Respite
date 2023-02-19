@@ -12,7 +12,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let config = Config::new();
     let addr = config.auth_uri.parse()?;
-    let auth_service = AuthService::new(create_pool().await?, config.jwt_secret);
+    let auth_service = AuthService::new(
+        create_pool(config.db_uri, config.db_pool_size).await?,
+        config.jwt_secret,
+    );
 
     Server::builder()
         .add_service(AuthServer::new(auth_service))

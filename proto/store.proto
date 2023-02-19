@@ -2,25 +2,11 @@ syntax = "proto3";
 package store;
 
 service Store {
-  rpc addItem (AddItemRequest) returns (AddItemResponse);
-  rpc removeItem(RemoveItemRequest) returns (RemoveItemResponse);
-  rpc uploadItemImage(UploadItemImageRequest) returns (UploadItemImageResponse);
-  rpc getItem(GetItemRequest) returns (GetItemResponse);
-  rpc getItems(GetItemsRequest) returns (GetItemsResponse);
   rpc createRestaurant(CreateRestaurantRequest) returns (CreateRestaurantResponse);
   rpc deleteRestaurant(DeleteRestaurantRequest) returns (DeleteRestaurantResponse);
   rpc uploadRestaurantLogo(UploadRestaurantLogoRequest) returns (UploadRestaurantLogoResponse);
   rpc getRestaurant(GetRestaurantRequest) returns (GetRestaurantResponse);
   rpc getRestaurants(GetRestaurantsRequest) returns (GetRestaurantsResponse);
-}
-
-message Item {
-  string id = 1;
-  string name = 2;
-  string description = 3;
-  string category = 4;
-  string restId = 5;
-  string image = 6;
 }
 
 message Restaurant {
@@ -29,51 +15,6 @@ message Restaurant {
   string description = 3;
   string ownerId = 4;
   string logo = 5;
-}
-
-message AddItemRequest {
-  string restId = 1;
-  string name = 2;
-  string description = 3;
-  string category = 4;
-}
-
-message AddItemResponse {
-  string itemId = 1;
-}
-
-message RemoveItemRequest {
-  string itemId = 1;
-}
-
-message RemoveItemResponse {
-  bool success = 1;
-}
-
-message UploadItemImageRequest {
-  string itemId = 1;
-  bytes image = 2;
-}
-
-message UploadItemImageResponse {
-  bool success = 1;
-}
-
-message GetItemRequest {
-  string itemId = 1;
-}
-
-message GetItemResponse {
-  Item item = 1;
-}
-
-message GetItemsRequest {
-  string restId = 1;
-  string category = 2;
-}
-
-message GetItemsResponse {
-  repeated Item items = 1;
 }
 
 message CreateRestaurantRequest {

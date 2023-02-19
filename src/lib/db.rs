@@ -1,15 +1,13 @@
-use crate::config::Config;
 use sqlx::postgres::PgArguments;
 use sqlx::postgres::PgPoolOptions;
 use sqlx::query::Query;
 use sqlx::{query, Error, Pool, Postgres};
 use std::sync::Arc;
 
-pub async fn create_pool() -> Result<Arc<Pool<Postgres>>, Error> {
-    let config = Config::new();
+pub async fn create_pool(db_uri: String, db_pool_size: u32) -> Result<Arc<Pool<Postgres>>, Error> {
     let pool = PgPoolOptions::new()
-        .max_connections(config.db_pool_size)
-        .connect(config.db_uri.as_str())
+        .max_connections(db_pool_size)
+        .connect(db_uri.as_str())
         .await?;
     Ok(Arc::new(pool))
 }

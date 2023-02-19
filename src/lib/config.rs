@@ -5,6 +5,7 @@ use std::{env, fs};
 pub struct Config {
     pub auth_uri: String,
     pub store_uri: String,
+    pub menu_uri: String,
     pub waiter_uri: String,
     pub db_uri: String,
     pub db_pool_size: u32,
@@ -17,6 +18,7 @@ impl Config {
         let config: Config = toml::from_str(&content).unwrap_or_else(|_| Config {
             auth_uri: env::var("auth_uri").unwrap_or_default(),
             store_uri: env::var("store_uri").unwrap_or_default(),
+            menu_uri: env::var("menu_uri").unwrap_or_default(),
             waiter_uri: env::var("waiter_uri").unwrap_or_default(),
             db_uri: env::var("db_uri").unwrap_or_default(),
             db_pool_size: env::var("db_pool_size")
