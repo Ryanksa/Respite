@@ -35,27 +35,31 @@ impl Store for StoreService {
     ) -> Result<Response<CreateRestaurantResponse>, Status> {
         let req = request.into_inner();
         let rest_id = Uuid::new_v4();
-        let path = format!("./img/{}", rest_id.to_string());
-
-        if let Err(err) = fs::write(path.clone(), req.image) {
-            log::error!("Store Service: {}", err);
-            return Err(Status::new(Code::Internal, ""));
-        };
+        let logo_path = format!("./img/{}", rest_id.to_string());
 
         let db_result = insert_restaurant(
-            rest_id.to_string(),
-            req.name,
-            req.description,
-            path,
-            req.owner_id,
+            &rest_id.to_string(),
+            &req.name,
+            &req.description,
+            &logo_path,
+            &req.owner_id,
         )
         .execute(self.pool.as_ref())
         .await;
 
         let res = match db_result {
-            Ok(_) => CreateRestaurantResponse {
-                rest_id: rest_id.to_string(),
-            },
+            Ok(result) => {
+                if result.rows_affected() == 0 {
+                    return Err(Status::new(Code::PermissionDenied, ""));
+                }
+                if let Err(err) = fs::write(logo_path, req.image) {
+                    log::error!("Store Service: {}", err);
+                    return Err(Status::new(Code::Internal, ""));
+                };
+                CreateRestaurantResponse {
+                    rest_id: rest_id.to_string(),
+                }
+            }
             Err(err) => {
                 log::error!("Store Service: {}", err);
                 return Err(Status::new(Code::Internal, ""));
@@ -69,9 +73,9 @@ impl Store for StoreService {
         request: Request<DeleteRestaurantRequest>,
     ) -> Result<Response<DeleteRestaurantResponse>, Status> {
         let req = request.into_inner();
-        let logo_path = format!("./img/{}", req.rest_id.clone());
+        let logo_path = format!("./img/{}", req.rest_id);
 
-        let db_result = delete_restaurant(req.rest_id, req.owner_id)
+        let db_result = delete_restaurant(&req.rest_id, &req.owner_id)
             .execute(self.pool.as_ref())
             .await;
 
@@ -98,9 +102,9 @@ impl Store for StoreService {
         request: Request<UploadRestaurantLogoRequest>,
     ) -> Result<Response<UploadRestaurantLogoResponse>, Status> {
         let req = request.into_inner();
-        let path = format!("./img/{}", req.rest_id);
+        let logo_path = format!("./img/{}", req.rest_id);
 
-        let db_result = upload_restaurant_logo(req.rest_id, path.clone(), req.owner_id)
+        let db_result = upload_restaurant_logo(&req.rest_id, &logo_path, &req.owner_id)
             .execute(self.pool.as_ref())
             .await;
 
@@ -109,7 +113,7 @@ impl Store for StoreService {
                 if result.rows_affected() == 0 {
                     return Err(Status::new(Code::NotFound, ""));
                 }
-                if let Err(err) = fs::write(path, req.image) {
+                if let Err(err) = fs::write(logo_path, req.image) {
                     log::error!("Store Service: {}", err);
                     return Err(Status::new(Code::Internal, ""));
                 };
@@ -129,7 +133,7 @@ impl Store for StoreService {
     ) -> Result<Response<GetRestaurantResponse>, Status> {
         let req = request.into_inner();
 
-        let db_result = get_restaurant(req.rest_id)
+        let db_result = get_restaurant(&req.rest_id)
             .map(|row| Restaurant {
                 id: row.get("id"),
                 name: row.get("name"),
@@ -157,7 +161,7 @@ impl Store for StoreService {
     ) -> Result<Response<GetRestaurantsResponse>, Status> {
         let req = request.into_inner();
 
-        let db_result = get_restaurants(req.owner_id)
+        let db_result = get_restaurants(&req.owner_id)
             .map(|row| Restaurant {
                 id: row.get("id"),
                 name: row.get("name"),

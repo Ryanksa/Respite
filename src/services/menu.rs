@@ -1,4 +1,4 @@
-use lib::db::{delete_item, get_item, get_items, get_restaurant, insert_item, upload_item_image};
+use lib::db::{delete_item, get_item, get_items, insert_item, upload_item_image};
 use menu_proto::menu_server::Menu;
 use menu_proto::{
     AddItemRequest, AddItemResponse, GetItemRequest, GetItemResponse, GetItemsRequest,
@@ -33,16 +33,16 @@ impl Menu for MenuService {
     ) -> Result<Response<AddItemResponse>, Status> {
         let req = request.into_inner();
         let item_id = Uuid::new_v4();
-        let path = format!("./img/{}", item_id.to_string());
+        let image_path = format!("./img/{}", item_id.to_string());
 
         let db_result = insert_item(
-            item_id.to_string(),
-            req.name,
-            req.description,
-            req.category,
-            path.clone(),
-            req.rest_id,
-            req.owner_id,
+            &item_id.to_string(),
+            &req.name,
+            &req.description,
+            &req.category,
+            &image_path,
+            &req.rest_id,
+            &req.owner_id,
         )
         .execute(self.pool.as_ref())
         .await;
@@ -52,7 +52,7 @@ impl Menu for MenuService {
                 if result.rows_affected() == 0 {
                     return Err(Status::new(Code::PermissionDenied, ""));
                 }
-                if let Err(err) = fs::write(path, req.image) {
+                if let Err(err) = fs::write(image_path, req.image) {
                     log::error!("Menu Service: {}", err);
                     return Err(Status::new(Code::Internal, ""));
                 };
@@ -73,9 +73,9 @@ impl Menu for MenuService {
         request: Request<RemoveItemRequest>,
     ) -> Result<Response<RemoveItemResponse>, Status> {
         let req = request.into_inner();
-        let image_path = format!("./img/{}", req.item_id.clone());
+        let image_path = format!("./img/{}", req.item_id);
 
-        let db_result = delete_item(req.item_id, req.owner_id)
+        let db_result = delete_item(&req.item_id, &req.owner_id)
             .execute(self.pool.as_ref())
             .await;
 
@@ -102,9 +102,9 @@ impl Menu for MenuService {
         request: Request<UploadItemImageRequest>,
     ) -> Result<Response<UploadItemImageResponse>, Status> {
         let req = request.into_inner();
-        let path = format!("./img/{}", req.item_id);
+        let image_path = format!("./img/{}", req.item_id);
 
-        let db_result = upload_item_image(req.item_id, path.clone(), req.owner_id)
+        let db_result = upload_item_image(&req.item_id, &image_path, &req.owner_id)
             .execute(self.pool.as_ref())
             .await;
 
@@ -113,7 +113,7 @@ impl Menu for MenuService {
                 if result.rows_affected() == 0 {
                     return Err(Status::new(Code::NotFound, ""));
                 }
-                if let Err(err) = fs::write(path, req.image) {
+                if let Err(err) = fs::write(image_path, req.image) {
                     log::error!("Menu Service: {}", err);
                     return Err(Status::new(Code::Internal, ""));
                 };
@@ -133,7 +133,7 @@ impl Menu for MenuService {
     ) -> Result<Response<GetItemResponse>, Status> {
         let req = request.into_inner();
 
-        let db_result = get_item(req.item_id)
+        let db_result = get_item(&req.item_id)
             .map(|row| Item {
                 id: row.get("id"),
                 name: row.get("name"),
@@ -161,7 +161,7 @@ impl Menu for MenuService {
     ) -> Result<Response<GetItemsResponse>, Status> {
         let req = request.into_inner();
 
-        let db_result = get_items(req.rest_id, req.category)
+        let db_result = get_items(&req.rest_id, &req.category)
             .map(|row| Item {
                 id: row.get("id"),
                 name: row.get("name"),

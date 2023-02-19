@@ -58,7 +58,7 @@ impl Auth for AuthService {
             }
         };
 
-        let db_result = insert_owner(owner_id.to_string(), req.email, salted_hash)
+        let db_result = insert_owner(&owner_id.to_string(), &req.email, &salted_hash)
             .execute(self.pool.as_ref())
             .await;
 
@@ -78,7 +78,7 @@ impl Auth for AuthService {
     ) -> Result<Response<SignInResponse>, Status> {
         let req = request.into_inner();
 
-        let db_result = get_owner_by_email(req.email)
+        let db_result = get_owner_by_email(&req.email)
             .fetch_one(self.pool.as_ref())
             .await;
 
@@ -143,7 +143,7 @@ impl Auth for AuthService {
             }
         };
 
-        let db_result = get_owner_by_id(token_data.claims.id)
+        let db_result = get_owner_by_id(&token_data.claims.id)
             .map(|row| Owner {
                 id: row.get("id"),
                 email: row.get("email"),
