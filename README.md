@@ -22,23 +22,25 @@ Run each service with environment variables:
 ```
 docker run -d --expose=6030 \
   -e auth_uri="127.0.0.1:6030" \
-  -e db_uri="postgres://username:password@localhost:5432/respite" \
+  -e db_uri="postgres://username:password@127.0.0.1:5432/respite" \
   -e db_pool_size="3" \
   -e jwt_secret="blah" \
   auth
 docker run -d --expose=6060 \
   -e store_uri="127.0.0.1:6060" \
-  -e db_uri="postgres://username:password@localhost:5432/respite" \
+  -e db_uri="postgres://username:password@127.0.0.1:5432/respite" \
   -e db_pool_size="3" \
+  -e img_path="./img" \
   store
 docker run -d --expose=6090 \
   -e menu_uri="127.0.0.1:6090" \
-  -e db_uri="postgres://username:password@localhost:5432/respite" \
+  -e db_uri="postgres://username:password@127.0.0.1:5432/respite" \
   -e db_pool_size="3" \
+  -e img_path="./img" \
   menu
 docker run -d --expose=6300 \
   -e waiter_uri="127.0.0.1:6300" \
-  -e db_uri="postgres://username:password@localhost:5432/respite" \
+  -e db_uri="postgres://username:password@127.0.0.1:5432/respite" \
   -e db_pool_size="3" \
   waiter
 ```

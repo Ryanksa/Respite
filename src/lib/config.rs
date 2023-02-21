@@ -10,6 +10,7 @@ pub struct Config {
     pub db_uri: String,
     pub db_pool_size: u32,
     pub jwt_secret: String,
+    pub img_path: String,
 }
 
 impl Config {
@@ -26,6 +27,7 @@ impl Config {
                 .parse()
                 .unwrap_or_default(),
             jwt_secret: env::var("jwt_secret").unwrap_or_default(),
+            img_path: env::var("img_path").unwrap_or_default(),
         });
         return config;
     }

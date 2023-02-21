@@ -17,11 +17,15 @@ pub mod menu_proto {
 
 pub struct MenuService {
     pool: Arc<Pool<Postgres>>,
+    img_path: String,
 }
 
 impl MenuService {
-    pub fn new(pool: Arc<Pool<Postgres>>) -> Self {
-        MenuService { pool: pool }
+    pub fn new(pool: Arc<Pool<Postgres>>, img_path: String) -> Self {
+        MenuService {
+            pool: pool,
+            img_path: img_path,
+        }
     }
 }
 
@@ -33,7 +37,7 @@ impl Menu for MenuService {
     ) -> Result<Response<AddItemResponse>, Status> {
         let req = request.into_inner();
         let item_id = Uuid::new_v4();
-        let image_path = format!("./img/{}", item_id.to_string());
+        let image_path = format!("{}/{}", self.img_path, item_id.to_string());
 
         let db_result = insert_item(
             &item_id.to_string(),
@@ -73,7 +77,7 @@ impl Menu for MenuService {
         request: Request<RemoveItemRequest>,
     ) -> Result<Response<RemoveItemResponse>, Status> {
         let req = request.into_inner();
-        let image_path = format!("./img/{}", req.item_id);
+        let image_path = format!("{}/{}", self.img_path, req.item_id);
 
         let db_result = delete_item(&req.item_id, &req.owner_id)
             .execute(self.pool.as_ref())
@@ -102,7 +106,7 @@ impl Menu for MenuService {
         request: Request<UploadItemImageRequest>,
     ) -> Result<Response<UploadItemImageResponse>, Status> {
         let req = request.into_inner();
-        let image_path = format!("./img/{}", req.item_id);
+        let image_path = format!("{}/{}", self.img_path, req.item_id);
 
         let db_result = upload_item_image(&req.item_id, &image_path, &req.owner_id)
             .execute(self.pool.as_ref())
@@ -146,7 +150,19 @@ impl Menu for MenuService {
             .await;
 
         let res = match db_result {
-            Ok(item) => GetItemResponse { item: Some(item) },
+            Ok(item) => {
+                let image = match fs::read(&item.image) {
+                    Ok(bytes) => bytes,
+                    Err(err) => {
+                        log::error!("Menu Service: {}", err);
+                        return Err(Status::new(Code::Internal, ""));
+                    }
+                };
+                GetItemResponse {
+                    item: Some(item),
+                    image: image,
+                }
+            }
             Err(err) => {
                 log::error!("Menu Service: {}", err);
                 return Err(Status::new(Code::Internal, ""));

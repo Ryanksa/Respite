@@ -12,7 +12,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let config = Config::new();
     let addr = config.menu_uri.parse()?;
-    let menu_service = MenuService::new(create_pool(config.db_uri, config.db_pool_size).await?);
+    let menu_service = MenuService::new(
+        create_pool(config.db_uri, config.db_pool_size).await?,
+        config.img_path,
+    );
 
     Server::builder()
         .add_service(MenuServer::new(menu_service))

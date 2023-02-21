@@ -19,11 +19,15 @@ pub mod store_proto {
 
 pub struct StoreService {
     pool: Arc<Pool<Postgres>>,
+    img_path: String,
 }
 
 impl StoreService {
-    pub fn new(pool: Arc<Pool<Postgres>>) -> Self {
-        StoreService { pool: pool }
+    pub fn new(pool: Arc<Pool<Postgres>>, img_path: String) -> Self {
+        StoreService {
+            pool: pool,
+            img_path: img_path,
+        }
     }
 }
 
@@ -35,7 +39,7 @@ impl Store for StoreService {
     ) -> Result<Response<CreateRestaurantResponse>, Status> {
         let req = request.into_inner();
         let rest_id = Uuid::new_v4();
-        let logo_path = format!("./img/{}", rest_id.to_string());
+        let logo_path = format!("{}/{}", self.img_path, rest_id.to_string());
 
         let db_result = insert_restaurant(
             &rest_id.to_string(),
@@ -73,7 +77,7 @@ impl Store for StoreService {
         request: Request<DeleteRestaurantRequest>,
     ) -> Result<Response<DeleteRestaurantResponse>, Status> {
         let req = request.into_inner();
-        let logo_path = format!("./img/{}", req.rest_id);
+        let logo_path = format!("{}/{}", self.img_path, req.rest_id);
 
         let db_result = delete_restaurant(&req.rest_id, &req.owner_id)
             .execute(self.pool.as_ref())
@@ -102,7 +106,7 @@ impl Store for StoreService {
         request: Request<UploadRestaurantLogoRequest>,
     ) -> Result<Response<UploadRestaurantLogoResponse>, Status> {
         let req = request.into_inner();
-        let logo_path = format!("./img/{}", req.rest_id);
+        let logo_path = format!("{}/{}", self.img_path, req.rest_id);
 
         let db_result = upload_restaurant_logo(&req.rest_id, &logo_path, &req.owner_id)
             .execute(self.pool.as_ref())
@@ -144,9 +148,19 @@ impl Store for StoreService {
             .await;
 
         let res = match db_result {
-            Ok(restaurant) => GetRestaurantResponse {
-                restaurant: Some(restaurant),
-            },
+            Ok(restaurant) => {
+                let image = match fs::read(&restaurant.logo) {
+                    Ok(bytes) => bytes,
+                    Err(err) => {
+                        log::error!("Store Service: {}", err);
+                        return Err(Status::new(Code::Internal, ""));
+                    }
+                };
+                GetRestaurantResponse {
+                    restaurant: Some(restaurant),
+                    image: image,
+                }
+            }
             Err(err) => {
                 log::error!("Store Service: {}", err);
                 return Err(Status::new(Code::Internal, ""));

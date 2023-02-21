@@ -52,6 +52,7 @@ message GetRestaurantRequest {
 
 message GetRestaurantResponse {
   Restaurant restaurant = 1;
+  bytes image = 2;
 }
 
 message GetRestaurantsRequest {

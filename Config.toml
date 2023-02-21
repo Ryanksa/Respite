@@ -3,7 +3,9 @@ store_uri = "127.0.0.1:6060"
 menu_uri = "127.0.0.1:6090"
 waiter_uri = "127.0.0.1:6300"
 
-db_uri = "postgres://username:password@localhost:5432/respite"
+db_uri = "postgres://username:password@127.0.0.1:5432/respite"
 db_pool_size = 3
 
 jwt_secret = "blah"
+
+img_path = "./img"

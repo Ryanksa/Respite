@@ -12,7 +12,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let config = Config::new();
     let addr = config.store_uri.parse()?;
-    let store_service = StoreService::new(create_pool(config.db_uri, config.db_pool_size).await?);
+    let store_service = StoreService::new(
+        create_pool(config.db_uri, config.db_pool_size).await?,
+        config.img_path,
+    );
 
     Server::builder()
         .add_service(StoreServer::new(store_service))

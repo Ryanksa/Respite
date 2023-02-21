@@ -56,6 +56,7 @@ message GetItemRequest {
 
 message GetItemResponse {
   Item item = 1;
+  bytes image = 2;
 }
 
 message GetItemsRequest {
