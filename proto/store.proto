@@ -4,7 +4,7 @@ package store;
 service Store {
   rpc createRestaurant(CreateRestaurantRequest) returns (CreateRestaurantResponse);
   rpc deleteRestaurant(DeleteRestaurantRequest) returns (DeleteRestaurantResponse);
-  rpc uploadRestaurantLogo(UploadRestaurantLogoRequest) returns (UploadRestaurantLogoResponse);
+  rpc updateRestaurant(UpdateRestaurantRequest) returns (UpdateRestaurantResponse);
   rpc getRestaurant(GetRestaurantRequest) returns (GetRestaurantResponse);
   rpc getRestaurants(GetRestaurantsRequest) returns (GetRestaurantsResponse);
 }
@@ -36,13 +36,15 @@ message DeleteRestaurantResponse {
   bool success = 1;
 }
 
-message UploadRestaurantLogoRequest {
+message UpdateRestaurantRequest {
   string restId = 1;
-  bytes image = 2;
-  string ownerId = 3;
+  string name = 2;
+  string description = 3;
+  bytes image = 4;
+  string ownerId = 5;
 }
 
-message UploadRestaurantLogoResponse {
+message UpdateRestaurantResponse {
   bool success = 1;
 }
 

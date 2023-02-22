@@ -4,7 +4,7 @@ package menu;
 service Menu {
   rpc addItem (AddItemRequest) returns (AddItemResponse);
   rpc removeItem(RemoveItemRequest) returns (RemoveItemResponse);
-  rpc uploadItemImage(UploadItemImageRequest) returns (UploadItemImageResponse);
+  rpc updateItem(UpdateItemRequest) returns (UpdateItemResponse);
   rpc getItem(GetItemRequest) returns (GetItemResponse);
   rpc getItems(GetItemsRequest) returns (GetItemsResponse);
 }
@@ -12,19 +12,21 @@ service Menu {
 message Item {
   string id = 1;
   string name = 2;
-  string description = 3;
-  string category = 4;
-  string image = 5;
-  string restId = 6;
+  float price = 3;
+  string description = 4;
+  string category = 5;
+  string image = 6;
+  string restId = 7;
 }
 
 message AddItemRequest {
   string restId = 1;
   string name = 2;
-  string description = 3;
-  string category = 4;
-  bytes image = 5;
-  string ownerId = 6;
+  float price = 3;
+  string description = 4;
+  string category = 5;
+  bytes image = 6;
+  string ownerId = 7;
 }
 
 message AddItemResponse {
@@ -40,13 +42,17 @@ message RemoveItemResponse {
   bool success = 1;
 }
 
-message UploadItemImageRequest {
+message UpdateItemRequest {
   string itemId = 1;
-  bytes image = 2;
-  string ownerId = 3;
+  string name = 2;
+  float price = 3;
+  string description = 4;
+  string category = 5;
+  bytes image = 6;
+  string ownerId = 7;
 }
 
-message UploadItemImageResponse {
+message UpdateItemResponse {
   bool success = 1;
 }
 

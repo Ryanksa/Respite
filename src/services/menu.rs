@@ -1,9 +1,9 @@
-use lib::db::{delete_item, get_item, get_items, insert_item, upload_item_image};
+use lib::db::{delete_item, get_item, get_items, insert_item, update_item};
 use menu_proto::menu_server::Menu;
 use menu_proto::{
     AddItemRequest, AddItemResponse, GetItemRequest, GetItemResponse, GetItemsRequest,
-    GetItemsResponse, Item, RemoveItemRequest, RemoveItemResponse, UploadItemImageRequest,
-    UploadItemImageResponse,
+    GetItemsResponse, Item, RemoveItemRequest, RemoveItemResponse, UpdateItemRequest,
+    UpdateItemResponse,
 };
 use sqlx::{Pool, Postgres, Row};
 use std::fs;
@@ -42,6 +42,7 @@ impl Menu for MenuService {
         let db_result = insert_item(
             &item_id.to_string(),
             &req.name,
+            &req.price,
             &req.description,
             &req.category,
             &image_path,
@@ -101,16 +102,24 @@ impl Menu for MenuService {
         Ok(Response::new(res))
     }
 
-    async fn upload_item_image(
+    async fn update_item(
         &self,
-        request: Request<UploadItemImageRequest>,
-    ) -> Result<Response<UploadItemImageResponse>, Status> {
+        request: Request<UpdateItemRequest>,
+    ) -> Result<Response<UpdateItemResponse>, Status> {
         let req = request.into_inner();
         let image_path = format!("{}/{}", self.img_path, req.item_id);
 
-        let db_result = upload_item_image(&req.item_id, &image_path, &req.owner_id)
-            .execute(self.pool.as_ref())
-            .await;
+        let db_result = update_item(
+            &req.item_id,
+            &req.name,
+            &req.price,
+            &req.description,
+            &req.category,
+            &image_path,
+            &req.owner_id,
+        )
+        .execute(self.pool.as_ref())
+        .await;
 
         let res = match db_result {
             Ok(result) => {
@@ -121,7 +130,7 @@ impl Menu for MenuService {
                     log::error!("Menu Service: {}", err);
                     return Err(Status::new(Code::Internal, ""));
                 };
-                UploadItemImageResponse { success: true }
+                UpdateItemResponse { success: true }
             }
             Err(err) => {
                 log::error!("Menu Service: {}", err);
@@ -141,6 +150,7 @@ impl Menu for MenuService {
             .map(|row| Item {
                 id: row.get("id"),
                 name: row.get("name"),
+                price: row.get("price"),
                 description: row.get("description"),
                 category: row.get("category"),
                 image: row.get("image"),
@@ -181,6 +191,7 @@ impl Menu for MenuService {
             .map(|row| Item {
                 id: row.get("id"),
                 name: row.get("name"),
+                price: row.get("price"),
                 description: row.get("description"),
                 category: row.get("category"),
                 image: row.get("image"),

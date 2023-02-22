@@ -63,15 +63,25 @@ pub fn delete_restaurant<'q>(
         .bind(owner_id);
 }
 
-pub fn upload_restaurant_logo<'q>(
+pub fn update_restaurant<'q>(
     id: &'q String,
+    name: &'q String,
+    description: &'q String,
     logo: &'q String,
     owner_id: &'q String,
 ) -> Query<'q, Postgres, PgArguments> {
-    return query("UPDATE restaurants SET image = $1 WHERE id = $2 AND owner_id = $3")
-        .bind(logo)
-        .bind(id)
-        .bind(owner_id);
+    return query(
+        "
+        UPDATE restaurants 
+        SET name = $1, description = $2, image = $3 
+        WHERE id = $4 AND owner_id = $5
+        ",
+    )
+    .bind(name)
+    .bind(description)
+    .bind(logo)
+    .bind(id)
+    .bind(owner_id);
 }
 
 pub fn get_item<'q>(id: &'q String) -> Query<'q, Postgres, PgArguments> {
@@ -90,6 +100,7 @@ pub fn get_items<'q>(
 pub fn insert_item<'q>(
     id: &'q String,
     name: &'q String,
+    price: &'q f32,
     description: &'q String,
     category: &'q String,
     image: &'q String,
@@ -99,11 +110,12 @@ pub fn insert_item<'q>(
     return query(
         "
         IF EXISTS (SELECT 1 FROM restaurants WHERE id = $6 AND owner_id = $7) 
-        INSERT INTO items VALUES ($1, $2, $3, $4, $5, $6)
+        INSERT INTO items VALUES ($1, $2, $3, $4, $5, $6, $7)
         ",
     )
     .bind(id)
     .bind(name)
+    .bind(price)
     .bind(description)
     .bind(category)
     .bind(image)
@@ -123,18 +135,27 @@ pub fn delete_item<'q>(id: &'q String, owner_id: &'q String) -> Query<'q, Postgr
     .bind(owner_id);
 }
 
-pub fn upload_item_image<'q>(
+pub fn update_item<'q>(
     id: &'q String,
+    name: &'q String,
+    price: &'q f32,
+    description: &'q String,
+    category: &'q String,
     image: &'q String,
     owner_id: &'q String,
 ) -> Query<'q, Postgres, PgArguments> {
     return query(
         "
-        UPDATE i SET i.image = $1 FROM items i 
-        JOIN restaurants r ON i.rest_id = r.id 
-        WHERE i.id = $2 AND r.owner_id = $3
+        UPDATE i 
+        SET i.name = $1, i.price = $2, i.description = $3, i.category = $4, i.image = $5 
+        FROM items i JOIN restaurants r ON i.rest_id = r.id 
+        WHERE i.id = $6 AND r.owner_id = $7
         ",
     )
+    .bind(name)
+    .bind(price)
+    .bind(description)
+    .bind(category)
     .bind(image)
     .bind(id)
     .bind(owner_id);

@@ -19,6 +19,7 @@ CREATE TABLE IF NOT EXISTS restaurants (
 CREATE TABLE IF NOT EXISTS items (
   id VARCHAR(64) PRIMARY KEY,
   name VARCHAR(128) NOT NULL,
+  price DECIMAL NOT NULL,
   description text,
   category VARCHAR(128),
   image VARCHAR(128),

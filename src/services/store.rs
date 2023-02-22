@@ -1,5 +1,5 @@
 use lib::db::{
-    delete_restaurant, get_restaurant, get_restaurants, insert_restaurant, upload_restaurant_logo,
+    delete_restaurant, get_restaurant, get_restaurants, insert_restaurant, update_restaurant,
 };
 use sqlx::{Pool, Postgres, Row};
 use std::fs;
@@ -8,7 +8,7 @@ use store_proto::store_server::Store;
 use store_proto::{
     CreateRestaurantRequest, CreateRestaurantResponse, DeleteRestaurantRequest,
     DeleteRestaurantResponse, GetRestaurantRequest, GetRestaurantResponse, GetRestaurantsRequest,
-    GetRestaurantsResponse, Restaurant, UploadRestaurantLogoRequest, UploadRestaurantLogoResponse,
+    GetRestaurantsResponse, Restaurant, UpdateRestaurantRequest, UpdateRestaurantResponse,
 };
 use tonic::{Code, Request, Response, Status};
 use uuid::Uuid;
@@ -101,16 +101,22 @@ impl Store for StoreService {
         Ok(Response::new(res))
     }
 
-    async fn upload_restaurant_logo(
+    async fn update_restaurant(
         &self,
-        request: Request<UploadRestaurantLogoRequest>,
-    ) -> Result<Response<UploadRestaurantLogoResponse>, Status> {
+        request: Request<UpdateRestaurantRequest>,
+    ) -> Result<Response<UpdateRestaurantResponse>, Status> {
         let req = request.into_inner();
         let logo_path = format!("{}/{}", self.img_path, req.rest_id);
 
-        let db_result = upload_restaurant_logo(&req.rest_id, &logo_path, &req.owner_id)
-            .execute(self.pool.as_ref())
-            .await;
+        let db_result = update_restaurant(
+            &req.rest_id,
+            &req.name,
+            &req.description,
+            &logo_path,
+            &req.owner_id,
+        )
+        .execute(self.pool.as_ref())
+        .await;
 
         let res = match db_result {
             Ok(result) => {
@@ -121,7 +127,7 @@ impl Store for StoreService {
                     log::error!("Store Service: {}", err);
                     return Err(Status::new(Code::Internal, ""));
                 };
-                UploadRestaurantLogoResponse { success: true }
+                UpdateRestaurantResponse { success: true }
             }
             Err(err) => {
                 log::error!("Store Service: {}", err);
