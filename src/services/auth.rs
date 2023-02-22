@@ -3,10 +3,7 @@ use argon2::{
     Argon2,
 };
 use auth_proto::auth_server::Auth;
-use auth_proto::{
-    Owner, SignInRequest, SignInResponse, SignUpRequest, SignUpResponse, VerifyRequest,
-    VerifyResponse,
-};
+use auth_proto::*;
 use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation};
 use lib::db::{get_owner_by_email, get_owner_by_id, insert_owner};
 use serde::{Deserialize, Serialize};

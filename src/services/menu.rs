@@ -1,10 +1,6 @@
 use lib::db::{delete_item, get_item, get_items, insert_item, update_item};
 use menu_proto::menu_server::Menu;
-use menu_proto::{
-    AddItemRequest, AddItemResponse, GetItemRequest, GetItemResponse, GetItemsRequest,
-    GetItemsResponse, Item, RemoveItemRequest, RemoveItemResponse, UpdateItemRequest,
-    UpdateItemResponse,
-};
+use menu_proto::*;
 use sqlx::{Pool, Postgres, Row};
 use std::fs;
 use std::sync::Arc;

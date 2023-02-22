@@ -1,0 +1,196 @@
+syntax = "proto3";
+package api;
+
+service Api {
+  rpc signUp (ApiSignUpRequest) returns (ApiSignUpResponse);
+  rpc signIn (ApiSignInRequest) returns (ApiSignInResponse);
+  rpc createRestaurant(ApiCreateRestaurantRequest) returns (ApiCreateRestaurantResponse);
+  rpc deleteRestaurant(ApiDeleteRestaurantRequest) returns (ApiDeleteRestaurantResponse);
+  rpc updateRestaurant(ApiUpdateRestaurantRequest) returns (ApiUpdateRestaurantResponse);
+  rpc getRestaurant(ApiGetRestaurantRequest) returns (ApiGetRestaurantResponse);
+  rpc getRestaurants(ApiGetRestaurantsRequest) returns (ApiGetRestaurantsResponse);
+  rpc addItem (ApiAddItemRequest) returns (ApiAddItemResponse);
+  rpc removeItem(ApiRemoveItemRequest) returns (ApiRemoveItemResponse);
+  rpc updateItem(ApiUpdateItemRequest) returns (ApiUpdateItemResponse);
+  rpc getItem(ApiGetItemRequest) returns (ApiGetItemResponse);
+  rpc getItems(ApiGetItemsRequest) returns (ApiGetItemsResponse);
+  rpc makeOrder (ApiMakeOrderRequest) returns (ApiMakeOrderResponse);
+  rpc completeOrder (ApiCompleteOrderRequest) returns (ApiCompleteOrderResponse);
+  rpc getOrders (ApiGetOrdersRequest) returns (stream ApiOrder);
+}
+
+message ApiOwner {
+  string id = 1;
+  string email = 2;
+}
+
+message ApiRestaurant {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+  bytes logo = 4;
+}
+
+message ApiItem {
+  string id = 1;
+  string name = 2;
+  float price = 3;
+  string description = 4;
+  string category = 5;
+  bytes image = 6;
+}
+
+message ApiOrder {
+  string id = 1;
+  string itemName = 2;
+  float requested_at = 3;
+  bool completed = 4;
+  int32 table_number = 5;
+  string description = 6;
+}
+
+message ApiSignUpRequest {
+  string email = 1;
+  string password = 2;
+}
+
+message ApiSignUpResponse {
+  bool success = 1;
+}
+
+message ApiSignInRequest {
+  string email = 1;
+  string password = 2;
+}
+
+message ApiSignInResponse {
+  ApiOwner owner = 1;
+  string jwt = 2;
+}
+
+message ApiCreateRestaurantRequest {
+  string jwt = 1;
+  string name = 2;
+  string description = 3;
+  bytes image = 4;
+}
+
+message ApiCreateRestaurantResponse {
+  string restId = 1;
+}
+
+message ApiDeleteRestaurantRequest {
+  string jwt = 1;
+  string restId = 2;
+}
+
+message ApiDeleteRestaurantResponse {
+  bool success = 1;
+}
+
+message ApiUpdateRestaurantRequest {
+  string jwt = 1;
+  string restId = 2;
+  string name = 3;
+  string description = 4;
+  bytes image = 5;
+}
+
+message ApiUpdateRestaurantResponse {
+  bool success = 1;
+}
+
+message ApiGetRestaurantRequest {
+  string restId = 1;
+}
+
+message ApiGetRestaurantResponse {
+  ApiRestaurant restaurant = 1;
+}
+
+message ApiGetRestaurantsRequest {
+  string ownerId = 1;
+}
+
+message ApiGetRestaurantsResponse {
+  repeated ApiRestaurant restaurants = 1;
+}
+
+message ApiAddItemRequest {
+  string jwt = 1;
+  string restId = 2;
+  string name = 3;
+  float price = 4;
+  string description = 5;
+  string category = 6;
+  bytes image = 7;
+}
+
+message ApiAddItemResponse {
+  string itemId = 1;
+}
+
+message ApiRemoveItemRequest {
+  string jwt = 1;
+  string itemId = 2;
+}
+
+message ApiRemoveItemResponse {
+  bool success = 1;
+}
+
+message ApiUpdateItemRequest {
+  string jwt = 1;
+  string itemId = 2;
+  string name = 3;
+  float price = 4;
+  string description = 5;
+  string category = 6;
+  bytes image = 7;
+}
+
+message ApiUpdateItemResponse {
+  bool success = 1;
+}
+
+message ApiGetItemRequest {
+  string itemId = 1;
+}
+
+message ApiGetItemResponse {
+  ApiItem item = 1;
+}
+
+message ApiGetItemsRequest {
+  string restId = 1;
+  string category = 2;
+}
+
+message ApiGetItemsResponse {
+  repeated ApiItem items = 1;
+}
+
+message ApiMakeOrderRequest {
+  string itemId = 1;
+  int32 table_number = 2;
+  string description = 3;
+}
+
+message ApiMakeOrderResponse {
+  string orderId = 1;
+}
+
+message ApiCompleteOrderRequest {
+  string jwt = 1;
+  string orderId = 2;
+}
+
+message ApiCompleteOrderResponse {
+  bool success = 1;
+}
+
+message ApiGetOrdersRequest {
+  string jwt = 1;
+  string restId = 2;
+  float since = 3;
+}

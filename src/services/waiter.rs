@@ -8,10 +8,7 @@ use tokio_stream::StreamExt;
 use tonic::{Code, Request, Response, Status};
 use uuid::Uuid;
 use waiter_proto::waiter_server::Waiter;
-use waiter_proto::{
-    CompleteOrderRequest, CompleteOrderResponse, GetOrdersRequest, MakeOrderRequest,
-    MakeOrderResponse, Order,
-};
+use waiter_proto::*;
 
 pub mod waiter_proto {
     tonic::include_proto!("waiter");

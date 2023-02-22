@@ -5,11 +5,7 @@ use sqlx::{Pool, Postgres, Row};
 use std::fs;
 use std::sync::Arc;
 use store_proto::store_server::Store;
-use store_proto::{
-    CreateRestaurantRequest, CreateRestaurantResponse, DeleteRestaurantRequest,
-    DeleteRestaurantResponse, GetRestaurantRequest, GetRestaurantResponse, GetRestaurantsRequest,
-    GetRestaurantsResponse, Restaurant, UpdateRestaurantRequest, UpdateRestaurantResponse,
-};
+use store_proto::*;
 use tonic::{Code, Request, Response, Status};
 use uuid::Uuid;
 
