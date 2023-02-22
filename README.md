@@ -20,6 +20,14 @@ docker build --build-arg service=waiter -t waiter .
 Run each service with environment variables:
 
 ```
+docker run -d --expose=6000 \
+  -e api_uri="127.0.0.1:6000" \
+  -e auth_uri="127.0.0.1:6030" \
+  -e store_uri="127.0.0.1:6060" \
+  -e menu_uri="127.0.0.1:6090" \
+  -e waiter_uri="127.0.0.1:6300" \
+  -e protocol="http" \
+  api
 docker run -d --expose=6030 \
   -e auth_uri="127.0.0.1:6030" \
   -e db_uri="postgres://username:password@127.0.0.1:5432/respite" \
