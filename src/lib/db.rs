@@ -12,18 +12,18 @@ pub async fn create_pool(db_uri: String, db_pool_size: u32) -> Result<Arc<Pool<P
     Ok(Arc::new(pool))
 }
 
-pub fn get_owner_by_id<'q>(id: &'q String) -> Query<'q, Postgres, PgArguments> {
+pub fn get_owner_by_id<'q>(id: &'q str) -> Query<'q, Postgres, PgArguments> {
     return query("SELECT * FROM owners WHERE id = $1").bind(id);
 }
 
-pub fn get_owner_by_email<'q>(email: &'q String) -> Query<'q, Postgres, PgArguments> {
+pub fn get_owner_by_email<'q>(email: &'q str) -> Query<'q, Postgres, PgArguments> {
     return query("SELECT * FROM owners WHERE email = $1").bind(email);
 }
 
 pub fn insert_owner<'q>(
-    id: &'q String,
-    email: &'q String,
-    hashed_password: &'q String,
+    id: &'q str,
+    email: &'q str,
+    hashed_password: &'q str,
 ) -> Query<'q, Postgres, PgArguments> {
     return query("INSERT INTO owners VALUES ($1, $2, $3)")
         .bind(id)
@@ -31,20 +31,20 @@ pub fn insert_owner<'q>(
         .bind(hashed_password);
 }
 
-pub fn get_restaurant<'q>(id: &'q String) -> Query<'q, Postgres, PgArguments> {
+pub fn get_restaurant<'q>(id: &'q str) -> Query<'q, Postgres, PgArguments> {
     return query("SELECT * FROM restaurants WHERE id = $1").bind(id);
 }
 
-pub fn get_restaurants<'q>(owner_id: &'q String) -> Query<'q, Postgres, PgArguments> {
+pub fn get_restaurants<'q>(owner_id: &'q str) -> Query<'q, Postgres, PgArguments> {
     return query("SELECT * FROM restaurants WHERE owner_id = $1").bind(owner_id);
 }
 
 pub fn insert_restaurant<'q>(
-    id: &'q String,
-    name: &'q String,
-    description: &'q String,
-    logo: &'q String,
-    owner_id: &'q String,
+    id: &'q str,
+    name: &'q str,
+    description: &'q str,
+    logo: &'q str,
+    owner_id: &'q str,
 ) -> Query<'q, Postgres, PgArguments> {
     return query("INSERT INTO restaurants VALUES ($1, $2, $3, $4, $5)")
         .bind(id)
@@ -54,21 +54,18 @@ pub fn insert_restaurant<'q>(
         .bind(owner_id);
 }
 
-pub fn delete_restaurant<'q>(
-    id: &'q String,
-    owner_id: &'q String,
-) -> Query<'q, Postgres, PgArguments> {
+pub fn delete_restaurant<'q>(id: &'q str, owner_id: &'q str) -> Query<'q, Postgres, PgArguments> {
     return query("DELETE FROM restaurants WHERE id = $1 AND owner_id = $2")
         .bind(id)
         .bind(owner_id);
 }
 
 pub fn update_restaurant<'q>(
-    id: &'q String,
-    name: &'q String,
-    description: &'q String,
-    logo: &'q String,
-    owner_id: &'q String,
+    id: &'q str,
+    name: &'q str,
+    description: &'q str,
+    logo: &'q str,
+    owner_id: &'q str,
 ) -> Query<'q, Postgres, PgArguments> {
     return query(
         "
@@ -84,28 +81,25 @@ pub fn update_restaurant<'q>(
     .bind(owner_id);
 }
 
-pub fn get_item<'q>(id: &'q String) -> Query<'q, Postgres, PgArguments> {
+pub fn get_item<'q>(id: &'q str) -> Query<'q, Postgres, PgArguments> {
     return query("SELECT * FROM items WHERE id = $1").bind(id);
 }
 
-pub fn get_items<'q>(
-    rest_id: &'q String,
-    category: &'q String,
-) -> Query<'q, Postgres, PgArguments> {
+pub fn get_items<'q>(rest_id: &'q str, category: &'q str) -> Query<'q, Postgres, PgArguments> {
     return query("SELECT * FROM items WHERE rest_id = $1 AND ($2 = '' OR category = $2)")
         .bind(rest_id)
         .bind(category);
 }
 
 pub fn insert_item<'q>(
-    id: &'q String,
-    name: &'q String,
+    id: &'q str,
+    name: &'q str,
     price: &'q f32,
-    description: &'q String,
-    category: &'q String,
-    image: &'q String,
-    rest_id: &'q String,
-    owner_id: &'q String,
+    description: &'q str,
+    category: &'q str,
+    image: &'q str,
+    rest_id: &'q str,
+    owner_id: &'q str,
 ) -> Query<'q, Postgres, PgArguments> {
     return query(
         "
@@ -123,7 +117,7 @@ pub fn insert_item<'q>(
     .bind(owner_id);
 }
 
-pub fn delete_item<'q>(id: &'q String, owner_id: &'q String) -> Query<'q, Postgres, PgArguments> {
+pub fn delete_item<'q>(id: &'q str, owner_id: &'q str) -> Query<'q, Postgres, PgArguments> {
     return query(
         "
         DELETE i FROM items i 
@@ -136,13 +130,13 @@ pub fn delete_item<'q>(id: &'q String, owner_id: &'q String) -> Query<'q, Postgr
 }
 
 pub fn update_item<'q>(
-    id: &'q String,
-    name: &'q String,
+    id: &'q str,
+    name: &'q str,
     price: &'q f32,
-    description: &'q String,
-    category: &'q String,
-    image: &'q String,
-    owner_id: &'q String,
+    description: &'q str,
+    category: &'q str,
+    image: &'q str,
+    owner_id: &'q str,
 ) -> Query<'q, Postgres, PgArguments> {
     return query(
         "
@@ -162,9 +156,9 @@ pub fn update_item<'q>(
 }
 
 pub fn get_orders<'q>(
-    rest_id: &'q String,
+    rest_id: &'q str,
     since: &'q f32,
-    owner_id: &'q String,
+    owner_id: &'q str,
 ) -> Query<'q, Postgres, PgArguments> {
     return query(
         "
@@ -183,12 +177,12 @@ pub fn get_orders<'q>(
 }
 
 pub fn insert_order<'q>(
-    id: &'q String,
-    item_id: &'q String,
+    id: &'q str,
+    item_id: &'q str,
     requested_at: &'q f32,
     completed: &'q bool,
     table_number: &'q i32,
-    description: &'q String,
+    description: &'q str,
 ) -> Query<'q, Postgres, PgArguments> {
     return query("INSERT INTO orders VALUES ($1, $2, $3, $4, $5, $6)")
         .bind(id)
@@ -199,10 +193,7 @@ pub fn insert_order<'q>(
         .bind(description);
 }
 
-pub fn complete_order<'q>(
-    id: &'q String,
-    owner_id: &'q String,
-) -> Query<'q, Postgres, PgArguments> {
+pub fn complete_order<'q>(id: &'q str, owner_id: &'q str) -> Query<'q, Postgres, PgArguments> {
     return query(
         "
         UPDATE o SET o.completed = TRUE FROM orders o 

@@ -45,7 +45,7 @@ message ApiOrder {
   string itemName = 2;
   float requested_at = 3;
   bool completed = 4;
-  int32 table_number = 5;
+  int32 tableNumber = 5;
   string description = 6;
 }
 
@@ -172,7 +172,7 @@ message ApiGetItemsResponse {
 
 message ApiMakeOrderRequest {
   string itemId = 1;
-  int32 table_number = 2;
+  int32 tableNumber = 2;
   string description = 3;
 }
 

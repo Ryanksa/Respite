@@ -106,7 +106,7 @@ impl Waiter for WaiterService {
                 .fetch(pool.as_ref());
 
             while let Ok(Some(order)) = db_stream.try_next().await {
-                if let Err(err) = tx.send(Ok(order.clone())).await {
+                if let Err(err) = tx.send(Ok(order)).await {
                     log::warn!("Waiter Service: {}", err);
                 }
             }
