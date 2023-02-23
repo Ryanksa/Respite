@@ -18,36 +18,83 @@ pub mod api_proto {
 }
 
 pub struct ApiService {
-    auth_client: AuthClient<Channel>,
-    store_client: StoreClient<Channel>,
-    menu_client: MenuClient<Channel>,
-    waiter_client: WaiterClient<Channel>,
+    protocol: String,
+    auth_uri: String,
+    store_uri: String,
+    menu_uri: String,
+    waiter_uri: String,
 }
 
 impl ApiService {
     pub fn new(
-        auth_client: AuthClient<Channel>,
-        store_client: StoreClient<Channel>,
-        menu_client: MenuClient<Channel>,
-        waiter_client: WaiterClient<Channel>,
+        protocol: String,
+        auth_uri: String,
+        store_uri: String,
+        menu_uri: String,
+        waiter_uri: String,
     ) -> Self {
         ApiService {
-            auth_client: auth_client,
-            store_client: store_client,
-            menu_client: menu_client,
-            waiter_client: waiter_client,
+            protocol: protocol,
+            auth_uri: auth_uri,
+            store_uri: store_uri,
+            menu_uri: menu_uri,
+            waiter_uri: waiter_uri,
         }
     }
 
-    async fn authenticate(self, jwt: String) -> Result<Owner, Status> {
-        let result = self.auth_client.verify(VerifyRequest { jwt: jwt }).await;
+    async fn get_auth_client(&self) -> Result<AuthClient<Channel>, Status> {
+        match AuthClient::connect(format!("{}://{}", self.protocol, self.auth_uri)).await {
+            Ok(client) => return Ok(client),
+            Err(err) => {
+                log::error!("Api Service: {}", err);
+                return Err(Status::new(Code::Internal, ""));
+            }
+        }
+    }
+
+    async fn get_store_client(&self) -> Result<StoreClient<Channel>, Status> {
+        match StoreClient::connect(format!("{}://{}", self.protocol, self.store_uri)).await {
+            Ok(client) => return Ok(client),
+            Err(err) => {
+                log::error!("Api Service: {}", err);
+                return Err(Status::new(Code::Internal, ""));
+            }
+        }
+    }
+
+    async fn get_menu_client(&self) -> Result<MenuClient<Channel>, Status> {
+        match MenuClient::connect(format!("{}://{}", self.protocol, self.menu_uri)).await {
+            Ok(client) => return Ok(client),
+            Err(err) => {
+                log::error!("Api Service: {}", err);
+                return Err(Status::new(Code::Internal, ""));
+            }
+        }
+    }
+
+    async fn get_waiter_client(&self) -> Result<WaiterClient<Channel>, Status> {
+        match WaiterClient::connect(format!("{}://{}", self.protocol, self.waiter_uri)).await {
+            Ok(client) => return Ok(client),
+            Err(err) => {
+                log::error!("Api Service: {}", err);
+                return Err(Status::new(Code::Internal, ""));
+            }
+        }
+    }
+
+    async fn authenticate(&self, jwt: String) -> Result<Owner, Status> {
+        let result = self
+            .get_auth_client()
+            .await?
+            .verify(VerifyRequest { jwt: jwt })
+            .await;
         match result {
             Ok(response) => {
                 let res = response.into_inner();
                 if let None = res.owner {
                     return Err(Status::new(Code::PermissionDenied, ""));
                 }
-                return Ok(res.owner.unwrap_or_default());
+                return Ok(res.owner.unwrap());
             }
             Err(status) => return Err(status),
         };
@@ -63,7 +110,8 @@ impl Api for ApiService {
         let req = request.into_inner();
 
         let result = self
-            .auth_client
+            .get_auth_client()
+            .await?
             .sign_up(SignUpRequest {
                 email: req.email,
                 password: req.password,
@@ -87,7 +135,8 @@ impl Api for ApiService {
         let req = request.into_inner();
 
         let result = self
-            .auth_client
+            .get_auth_client()
+            .await?
             .sign_in(SignInRequest {
                 email: req.email,
                 password: req.password,
@@ -100,7 +149,7 @@ impl Api for ApiService {
                 if let None = res.owner {
                     return Err(Status::new(Code::PermissionDenied, ""));
                 }
-                let owner = res.owner.unwrap_or_default();
+                let owner = res.owner.unwrap();
                 ApiSignInResponse {
                     owner: Some(ApiOwner {
                         id: owner.id,
@@ -123,7 +172,8 @@ impl Api for ApiService {
         let owner = self.authenticate(req.jwt).await?;
 
         let result = self
-            .store_client
+            .get_store_client()
+            .await?
             .create_restaurant(CreateRestaurantRequest {
                 owner_id: owner.id,
                 name: req.name,
@@ -150,7 +200,8 @@ impl Api for ApiService {
         let owner = self.authenticate(req.jwt).await?;
 
         let result = self
-            .store_client
+            .get_store_client()
+            .await?
             .delete_restaurant(DeleteRestaurantRequest {
                 rest_id: req.rest_id,
                 owner_id: owner.id,
@@ -175,7 +226,8 @@ impl Api for ApiService {
         let owner = self.authenticate(req.jwt).await?;
 
         let result = self
-            .store_client
+            .get_store_client()
+            .await?
             .update_restaurant(UpdateRestaurantRequest {
                 rest_id: req.rest_id,
                 name: req.name,
@@ -202,7 +254,8 @@ impl Api for ApiService {
         let req = request.into_inner();
 
         let result = self
-            .store_client
+            .get_store_client()
+            .await?
             .get_restaurant(GetRestaurantRequest {
                 rest_id: req.rest_id,
             })
@@ -214,7 +267,7 @@ impl Api for ApiService {
                 if let None = res.restaurant {
                     return Err(Status::new(Code::NotFound, ""));
                 }
-                let restaurant = res.restaurant.unwrap_or_default();
+                let restaurant = res.restaurant.unwrap();
                 ApiGetRestaurantResponse {
                     restaurant: Some(ApiRestaurant {
                         id: restaurant.id,
@@ -237,7 +290,8 @@ impl Api for ApiService {
         let req = request.into_inner();
 
         let result = self
-            .store_client
+            .get_store_client()
+            .await?
             .get_restaurants(GetRestaurantsRequest {
                 owner_id: req.owner_id,
             })
@@ -249,10 +303,10 @@ impl Api for ApiService {
                 let restaurants = res
                     .restaurants
                     .iter()
-                    .map(|&restaurant| ApiRestaurant {
-                        id: restaurant.id,
-                        name: restaurant.name,
-                        description: restaurant.description,
+                    .map(|restaurant| ApiRestaurant {
+                        id: restaurant.id.clone(),
+                        name: restaurant.name.clone(),
+                        description: restaurant.description.clone(),
                         logo: vec![],
                     })
                     .collect();
@@ -274,7 +328,8 @@ impl Api for ApiService {
         let owner = self.authenticate(req.jwt).await?;
 
         let result = self
-            .menu_client
+            .get_menu_client()
+            .await?
             .add_item(AddItemRequest {
                 rest_id: req.rest_id,
                 name: req.name,
@@ -304,7 +359,8 @@ impl Api for ApiService {
         let owner = self.authenticate(req.jwt).await?;
 
         let result = self
-            .menu_client
+            .get_menu_client()
+            .await?
             .remove_item(RemoveItemRequest {
                 item_id: req.item_id,
                 owner_id: owner.id,
@@ -329,7 +385,8 @@ impl Api for ApiService {
         let owner = self.authenticate(req.jwt).await?;
 
         let result = self
-            .menu_client
+            .get_menu_client()
+            .await?
             .update_item(UpdateItemRequest {
                 item_id: req.item_id,
                 name: req.name,
@@ -358,7 +415,8 @@ impl Api for ApiService {
         let req = request.into_inner();
 
         let result = self
-            .menu_client
+            .get_menu_client()
+            .await?
             .get_item(GetItemRequest {
                 item_id: req.item_id,
             })
@@ -370,7 +428,7 @@ impl Api for ApiService {
                 if let None = res.item {
                     return Err(Status::new(Code::NotFound, ""));
                 }
-                let item = res.item.unwrap_or_default();
+                let item = res.item.unwrap();
                 ApiGetItemResponse {
                     item: Some(ApiItem {
                         id: item.id,
@@ -395,7 +453,8 @@ impl Api for ApiService {
         let req = request.into_inner();
 
         let result = self
-            .menu_client
+            .get_menu_client()
+            .await?
             .get_items(GetItemsRequest {
                 rest_id: req.rest_id,
                 category: req.category,
@@ -408,12 +467,12 @@ impl Api for ApiService {
                 let items = res
                     .items
                     .iter()
-                    .map(|&item| ApiItem {
-                        id: item.id,
-                        name: item.name,
+                    .map(|item| ApiItem {
+                        id: item.id.clone(),
+                        name: item.name.clone(),
                         price: item.price,
-                        description: item.description,
-                        category: item.category,
+                        description: item.description.clone(),
+                        category: item.category.clone(),
                         image: vec![],
                     })
                     .collect();
@@ -432,7 +491,8 @@ impl Api for ApiService {
         let req = request.into_inner();
 
         let result = self
-            .waiter_client
+            .get_waiter_client()
+            .await?
             .make_order(MakeOrderRequest {
                 item_id: req.item_id,
                 table_number: req.table_number,
@@ -458,7 +518,8 @@ impl Api for ApiService {
         let owner = self.authenticate(req.jwt).await?;
 
         let result = self
-            .waiter_client
+            .get_waiter_client()
+            .await?
             .complete_order(CompleteOrderRequest {
                 order_id: req.order_id,
                 owner_id: owner.id,
@@ -486,7 +547,8 @@ impl Api for ApiService {
         let (tx, rx) = mpsc::channel(3);
 
         let result = self
-            .waiter_client
+            .get_waiter_client()
+            .await?
             .get_orders(GetOrdersRequest {
                 rest_id: req.rest_id,
                 since: req.since,
@@ -497,9 +559,9 @@ impl Api for ApiService {
         if let Err(status) = result {
             return Err(status);
         }
+        let mut stream = result.unwrap().into_inner();
 
         tokio::spawn(async move {
-            let stream = result.unwrap().into_inner();
             while let Ok(Some(order)) = stream.message().await {
                 let api_order = ApiOrder {
                     id: order.id,
