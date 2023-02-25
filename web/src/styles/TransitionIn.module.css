@@ -10,12 +10,14 @@ body::-webkit-scrollbar {
 
 .backdrop {
   --slide-out: 100%;
+  position: fixed;
+  z-index: 100;
   animation: slide-out 750ms cubic-bezier(0.95, 0, 0.47, 1.11) 4200ms forwards;
 }
 
 .container {
-  position: relative;
   --slide-out: -100%;
+  position: absolute;
   animation: zoom-in 2100ms cubic-bezier(0.48, 0, 0.42, 1) 2400ms forwards,
     slide-out 750ms cubic-bezier(0.95, 0, 0.47, 1.11) 4200ms forwards;
 }

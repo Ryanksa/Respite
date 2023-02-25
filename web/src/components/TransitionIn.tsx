@@ -1,4 +1,4 @@
-import styles from "~/styles/LoadIn.module.css";
+import styles from "~/styles/TransitionIn.module.css";
 import bread from "~/assets/bread.jpg";
 import bruchetta from "~/assets/bruchetta.jpg";
 import cheeseBoard from "~/assets/cheese-board.jpg";
@@ -15,19 +15,11 @@ import tsukemen from "~/assets/tsukemen.jpg";
 import wuGeng from "~/assets/wu-geng.jpg";
 import restaurant from "~/assets/restaurant-bg.jpg";
 
-type Props = {
-  onComplete: () => void;
-};
-
-export default function LoadIn(props: Props) {
-  setTimeout(() => {
-    props.onComplete();
-  }, 4500);
-
+export default function TransitionIn() {
   return (
     <div
       data-theme="dracula"
-      class={`${styles.backdrop} overflow-hidden h-screen w-full`}
+      class={`${styles.backdrop} overflow-hidden h-screen w-full hidden lg:block`}
     >
       <div class={`${styles.container} overflow-hidden h-full w-full`}>
         <div
@@ -67,17 +59,14 @@ export default function LoadIn(props: Props) {
           <img src={hatYai} class="object-cover m-auto rounded-lg" />
         </div>
         <div
-          class={`${styles.box} ${styles.row2} ${styles.box8} rounded-lg overflow-hidden`}
+          class={`${styles.box} ${styles.row2} ${styles.box8} flex rounded-lg overflow-hidden`}
         >
-          <div class="h-full w-full relative">
-            <img src={restaurant} class="object-cover m-auto" />
-            <h1
-              class={`${styles.fadeOut} absolute top-1/2 -translate-y-1/2 w-full text-[0.5rem] logo`}
-              style={{ "backface-visibility": "hidden" }}
-            >
-              Respite
-            </h1>
-          </div>
+          <img src={restaurant} class="object-cover m-auto rounded-lg" />
+          <h1
+            class={`${styles.fadeOut} absolute top-1/2 -translate-y-1/2 w-full text-[0.5rem] logo z-10`}
+          >
+            Respite
+          </h1>
         </div>
         <div
           class={`${styles.box} ${styles.row2} ${styles.box9} flex rounded-lg overflow-hidden`}
