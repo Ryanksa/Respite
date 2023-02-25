@@ -25,56 +25,88 @@ export default function LoadIn(props: Props) {
 
   setTimeout(() => {
     setInTransition(false);
-  }, 2600);
+  }, 5000);
 
   return (
     <Show when={inTransition()} fallback={c()}>
       <div data-theme="dracula" class="overflow-hidden h-screen w-full">
         <div class={`${styles.container} overflow-hidden h-full w-full`}>
-          <div class={`${styles.box} ${styles.box1} ${styles.row1}`}>
-            <img src={cheeseBoard} class="h-full" />
+          <div
+            class={`${styles.box} ${styles.box1} ${styles.row1} flex rounded-lg overflow-hidden`}
+          >
+            <img src={cheeseBoard} class="object-cover m-auto rounded-lg" />
           </div>
-          <div class={`${styles.box} ${styles.box2} ${styles.row1}`}>
-            <img src={bread} class="h-full" />
+          <div
+            class={`${styles.box} ${styles.box2} ${styles.row1} flex rounded-lg overflow-hidden`}
+          >
+            <img src={bread} class="object-cover m-auto rounded-lg" />
           </div>
-          <div class={`${styles.box} ${styles.box3} ${styles.row1}`}>
-            <img src={bruchetta} class="h-full" />
+          <div
+            class={`${styles.box} ${styles.box3} ${styles.row1} flex rounded-lg overflow-hidden`}
+          >
+            <img src={bruchetta} class="object-cover m-auto rounded-lg" />
           </div>
-          <div class={`${styles.box} ${styles.box4} ${styles.row1}`}>
-            <img src={steak} class="h-full" />
+          <div
+            class={`${styles.box} ${styles.box4} ${styles.row1} flex rounded-lg overflow-hidden`}
+          >
+            <img src={steak} class="object-cover m-auto rounded-lg" />
           </div>
-          <div class={`${styles.box} ${styles.box5} ${styles.row1}`}>
-            <img src={curry} class="h-full" />
-          </div>
-
-          <div class={`${styles.box} ${styles.row2} ${styles.box6}`}>
-            <img src={kimchiJjigae} class="h-full" />
-          </div>
-          <div class={`${styles.box} ${styles.row2} ${styles.box7}`}>
-            <img src={hatYai} class="h-full" />
-          </div>
-          <div class={`${styles.box} ${styles.row2} ${styles.box8}`}>{c()}</div>
-          <div class={`${styles.box} ${styles.row2} ${styles.box9}`}>
-            <img src={malvaPudding} class="h-full" />
-          </div>
-          <div class={`${styles.box} ${styles.row2} ${styles.box10}`}>
-            <img src={wuGeng} class="h-full" />
+          <div
+            class={`${styles.box} ${styles.box5} ${styles.row1} flex rounded-lg overflow-hidden`}
+          >
+            <img src={malvaPudding} class="object-cover m-auto rounded-lg" />
           </div>
 
-          <div class={`${styles.box} ${styles.row3} ${styles.box1}`}>
-            <img src={pho} class="h-full" />
+          <div
+            class={`${styles.box} ${styles.row2} ${styles.box6} flex rounded-lg overflow-hidden`}
+          >
+            <img src={kimchiJjigae} class="object-cover m-auto rounded-lg" />
           </div>
-          <div class={`${styles.box} ${styles.row3} ${styles.box2}`}>
-            <img src={tsukemen} class="h-full" />
+          <div
+            class={`${styles.box} ${styles.row2} ${styles.box7} flex rounded-lg overflow-hidden`}
+          >
+            <img src={hatYai} class="object-cover m-auto rounded-lg" />
           </div>
-          <div class={`${styles.box} ${styles.row3} ${styles.box3}`}>
-            <img src={milkTea} class="h-full" />
+          <div
+            class={`${styles.box} ${styles.row2} ${styles.box8} rounded-lg overflow-hidden`}
+          >
+            {c()}
           </div>
-          <div class={`${styles.box} ${styles.row3} ${styles.box4}`}>
-            <img src={shavedIce} class="h-full" />
+          <div
+            class={`${styles.box} ${styles.row2} ${styles.box9} flex rounded-lg overflow-hidden`}
+          >
+            <img src={milkTea} class="object-cover m-auto rounded-lg" />
           </div>
-          <div class={`${styles.box} ${styles.row3} ${styles.box5}`}>
-            <img src={macaron} class="h-full" />
+          <div
+            class={`${styles.box} ${styles.row2} ${styles.box10} flex rounded-lg overflow-hidden`}
+          >
+            <img src={shavedIce} class="object-cover m-auto rounded-lg" />
+          </div>
+
+          <div
+            class={`${styles.box} ${styles.row3} ${styles.box1} flex rounded-lg overflow-hidden`}
+          >
+            <img src={pho} class="object-cover m-auto rounded-lg" />
+          </div>
+          <div
+            class={`${styles.box} ${styles.row3} ${styles.box2} flex rounded-lg overflow-hidden`}
+          >
+            <img src={tsukemen} class="object-cover m-auto rounded-lg" />
+          </div>
+          <div
+            class={`${styles.box} ${styles.row3} ${styles.box3} flex rounded-lg overflow-hidden`}
+          >
+            <img src={wuGeng} class="object-cover m-auto rounded-lg" />
+          </div>
+          <div
+            class={`${styles.box} ${styles.row3} ${styles.box4} flex rounded-lg overflow-hidden`}
+          >
+            <img src={curry} class="object-cover m-auto rounded-lg" />
+          </div>
+          <div
+            class={`${styles.box} ${styles.row3} ${styles.box5} flex rounded-lg overflow-hidden`}
+          >
+            <img src={macaron} class="object-cover m-auto rounded-lg" />
           </div>
         </div>
       </div>
