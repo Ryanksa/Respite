@@ -1,3 +1,11 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer components {
+  .logo {
+    @apply text-blue-800/50 text-center tracking-widest font-mono;
+    text-shadow: 0.5px 0.75px theme("colors.violet.300"),
+      0 0 0.25rem theme("colors.indigo.300");
+  }
+}
