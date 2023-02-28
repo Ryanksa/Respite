@@ -6,9 +6,19 @@ A customizable restaurant ordering app.
 - Add items to the restaurant menu, with optional image and description.
 - Customers can now order through the app.
 
-### Docker Setup
+### Server Setup
 
-Build each service image:
+Run each service with cargo:
+
+```
+cargo run --release --bin api
+cargo run --release --bin auth
+cargo run --release --bin store
+cargo run --release --bin menu
+cargo run --release --bin waiter
+```
+
+To run with docker, build each service image first:
 
 ```
 docker build --build-arg service=api -t api .
@@ -18,7 +28,7 @@ docker build --build-arg service=menu -t menu .
 docker build --build-arg service=waiter -t waiter .
 ```
 
-Run each service with environment variables:
+Then run each service with environment variables:
 
 ```
 docker run -d -p 6000:6000 \
@@ -58,12 +68,19 @@ docker run -d -p 6300:6300 \
   waiter
 ```
 
-### Generating proto for web
+### Web Setup
 
-Unlike with Rust Tonic, the necessary code to integrate with protobuf isn't generated automatically.
-To generate the necessary code, run the following:
+First, generate the necessary code for protobuf:
 
 ```
 cd web
 npx protoc --ts_out ./src/services/ --ts_opt long_type_string --ts_opt optimize_code_size --proto_path .. proto/api.proto
+```
+
+Then, build and run the web server:
+
+```
+npm install
+npm run build
+npm run start
 ```
