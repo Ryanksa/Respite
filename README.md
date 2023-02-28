@@ -68,6 +68,15 @@ docker run -d -p 6300:6300 \
   waiter
 ```
 
+### Proxy Setup
+
+Run the envoy proxy with docker:
+
+```
+cd envoy
+docker-compose up -d
+```
+
 ### Web Setup
 
 First, generate the necessary code for protobuf:

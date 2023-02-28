@@ -1,11 +1,13 @@
 import { createSignal, Show } from "solid-js";
 import { apiClient } from "~/services/api";
 import { ApiSignUpRequest } from "~/services/proto/api";
+import Alert from "~/components/Alert";
 
 export default function SignUp() {
   const [step, setStep] = createSignal(0);
   const [email, setEmail] = createSignal("");
   const [password, setPassword] = createSignal("");
+  const [error, setError] = createSignal("");
 
   const signUp = () => {
     const request: ApiSignUpRequest = {
@@ -15,12 +17,11 @@ export default function SignUp() {
 
     apiClient
       .signUp(request)
-      .then((unaryCall) => {
-        console.log(unaryCall.status);
-        console.log(unaryCall.response.success);
+      .then(() => {
+        window.location.replace("/login");
       })
-      .catch((err) => {
-        console.error(err);
+      .catch(() => {
+        setError("Invalid email or password!");
       });
   };
 
@@ -75,6 +76,7 @@ export default function SignUp() {
           </button>
         </div>
       </Show>
+      <Alert message={error()} dismiss={() => setError("")} />
     </main>
   );
 }

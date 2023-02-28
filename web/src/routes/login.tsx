@@ -3,10 +3,12 @@ import { A } from "solid-start";
 import TransitionIn from "~/components/TransitionIn";
 import { apiClient } from "~/services/api";
 import { ApiSignInRequest } from "~/services/proto/api";
+import Alert from "~/components/Alert";
 
 export default function Login() {
   const [email, setEmail] = createSignal("");
   const [password, setPassword] = createSignal("");
+  const [error, setError] = createSignal("");
 
   const login = () => {
     const request: ApiSignInRequest = {
@@ -17,12 +19,12 @@ export default function Login() {
     apiClient
       .signIn(request)
       .then((unaryCall) => {
-        console.log(unaryCall.status);
-        console.log(unaryCall.response.jwt);
-        console.log(unaryCall.response.owner);
+        localStorage.setItem("jwt", unaryCall.response.jwt);
+        localStorage.setItem("owner", JSON.stringify(unaryCall.response.owner));
+        window.location.replace("/");
       })
-      .catch((err) => {
-        console.error(err);
+      .catch(() => {
+        setError("Invalid email or password!");
       });
   };
 
@@ -60,6 +62,7 @@ export default function Login() {
           </A>
           !
         </div>
+        <Alert message={error()} dismiss={() => setError("")} />
       </main>
     </>
   );
