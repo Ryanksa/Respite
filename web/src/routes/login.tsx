@@ -1,14 +1,16 @@
 import { createSignal } from "solid-js";
-import { A } from "solid-start";
-import TransitionIn from "~/components/TransitionIn";
+import { useNavigate, A } from "solid-start";
 import { apiClient } from "~/services/api";
 import { ApiSignInRequest } from "~/services/proto/api";
+import TransitionIn from "~/components/TransitionIn";
 import Alert from "~/components/Alert";
 
 export default function Login() {
   const [email, setEmail] = createSignal("");
   const [password, setPassword] = createSignal("");
   const [error, setError] = createSignal("");
+
+  const navigate = useNavigate();
 
   const login = () => {
     const request: ApiSignInRequest = {
@@ -19,9 +21,12 @@ export default function Login() {
     apiClient
       .signIn(request)
       .then((unaryCall) => {
-        localStorage.setItem("jwt", unaryCall.response.jwt);
-        localStorage.setItem("owner", JSON.stringify(unaryCall.response.owner));
-        window.location.replace("/");
+        sessionStorage.setItem("jwt", unaryCall.response.jwt);
+        sessionStorage.setItem(
+          "owner",
+          JSON.stringify(unaryCall.response.owner)
+        );
+        navigate("/");
       })
       .catch(() => {
         setError("Invalid email or password!");
@@ -32,7 +37,9 @@ export default function Login() {
     <>
       <TransitionIn />
       <main data-theme="winter" class="p-8 flex flex-col gap-16">
-        <h1 class="logo w-max text-2xl">Respite</h1>
+        <A class="logo w-max text-2xl" href="">
+          Respite
+        </A>
         <div class="flex flex-col gap-8 items-center w-full">
           <h2 class="text-2xl">Login to your account</h2>
           <div class="form-control flex flex-col gap-3 w-full max-w-xs m-auto">

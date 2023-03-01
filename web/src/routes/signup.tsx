@@ -1,4 +1,5 @@
 import { createSignal, Show } from "solid-js";
+import { useNavigate, A } from "solid-start";
 import { apiClient } from "~/services/api";
 import { ApiSignUpRequest } from "~/services/proto/api";
 import Alert from "~/components/Alert";
@@ -9,6 +10,8 @@ export default function SignUp() {
   const [password, setPassword] = createSignal("");
   const [error, setError] = createSignal("");
 
+  const navigate = useNavigate();
+
   const signUp = () => {
     const request: ApiSignUpRequest = {
       email: email(),
@@ -18,7 +21,7 @@ export default function SignUp() {
     apiClient
       .signUp(request)
       .then(() => {
-        window.location.replace("/login");
+        navigate("/login");
       })
       .catch(() => {
         setError("Invalid email or password!");
@@ -27,7 +30,9 @@ export default function SignUp() {
 
   return (
     <main data-theme="winter" class="p-8 flex flex-col gap-16">
-      <h1 class="logo w-max text-2xl">Respite</h1>
+      <A class="logo w-max text-2xl" href="/login">
+        Respite
+      </A>
       <Show when={step() === 0}>
         <div class="flex flex-col gap-8 items-center w-full max-w-sm m-auto">
           <div class="form-control w-full">

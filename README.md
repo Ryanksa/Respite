@@ -32,7 +32,7 @@ Then run each service with environment variables:
 
 ```
 docker run -d -p 6000:6000 \
-  -e api_uri="127.0.0.1:6000" \
+  -e api_uri="0.0.0.0:6000" \
   -e auth_uri="host.docker.internal:6030" \
   -e store_uri="host.docker.internal:6060" \
   -e menu_uri="host.docker.internal:6090" \
@@ -41,28 +41,28 @@ docker run -d -p 6000:6000 \
   api
 
 docker run -d -p 6030:6030 \
-  -e auth_uri="127.0.0.1:6030" \
+  -e auth_uri="0.0.0.0:6030" \
   -e db_uri="postgres://username:password@host.docker.internal:5432/respite" \
   -e db_pool_size="3" \
   -e jwt_secret="blah" \
   auth
 
 docker run -d -p 6060:6060 \
-  -e store_uri="127.0.0.1:6060" \
+  -e store_uri="0.0.0.0:6060" \
   -e db_uri="postgres://username:password@host.docker.internal:5432/respite" \
   -e db_pool_size="3" \
   -e img_path="./img" \
   store
 
 docker run -d -p 6090:6090 \
-  -e menu_uri="127.0.0.1:6090" \
+  -e menu_uri="0.0.0.0:6090" \
   -e db_uri="postgres://username:password@host.docker.internal:5432/respite" \
   -e db_pool_size="3" \
   -e img_path="./img" \
   menu
 
 docker run -d -p 6300:6300 \
-  -e waiter_uri="127.0.0.1:6300" \
+  -e waiter_uri="0.0.0.0:6300" \
   -e db_uri="postgres://username:password@host.docker.internal:5432/respite" \
   -e db_pool_size="3" \
   waiter
@@ -73,7 +73,7 @@ docker run -d -p 6300:6300 \
 Run the envoy proxy with docker:
 
 ```
-cd envoy
+cd proxy
 docker-compose up -d
 ```
 
