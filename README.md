@@ -83,7 +83,7 @@ First, generate the necessary code for protobuf:
 
 ```
 cd web
-npx protoc --ts_out ./src/services/ --ts_opt long_type_string --ts_opt optimize_code_size --proto_path .. proto/api.proto
+npx protoc --ts_out ./src/services/proto --ts_opt long_type_string --ts_opt optimize_code_size --proto_path ../proto api.proto
 ```
 
 Then, build and run the web server:

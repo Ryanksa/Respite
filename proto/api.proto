@@ -7,16 +7,16 @@ service Api {
   rpc createRestaurant(ApiCreateRestaurantRequest) returns (ApiCreateRestaurantResponse);
   rpc deleteRestaurant(ApiDeleteRestaurantRequest) returns (ApiDeleteRestaurantResponse);
   rpc updateRestaurant(ApiUpdateRestaurantRequest) returns (ApiUpdateRestaurantResponse);
-  rpc getRestaurant(ApiGetRestaurantRequest) returns (ApiGetRestaurantResponse);
-  rpc getRestaurants(ApiGetRestaurantsRequest) returns (ApiGetRestaurantsResponse);
+  rpc getRestaurant(ApiGetRestaurantRequest) returns (ApiRestaurant);
+  rpc getRestaurants(ApiGetRestaurantsRequest) returns (stream ApiRestaurant);
   rpc addItem (ApiAddItemRequest) returns (ApiAddItemResponse);
   rpc removeItem(ApiRemoveItemRequest) returns (ApiRemoveItemResponse);
   rpc updateItem(ApiUpdateItemRequest) returns (ApiUpdateItemResponse);
-  rpc getItem(ApiGetItemRequest) returns (ApiGetItemResponse);
-  rpc getItems(ApiGetItemsRequest) returns (ApiGetItemsResponse);
+  rpc getItem(ApiGetItemRequest) returns (ApiItem);
+  rpc getItems(ApiGetItemsRequest) returns (stream ApiItem);
   rpc makeOrder (ApiMakeOrderRequest) returns (ApiMakeOrderResponse);
   rpc completeOrder (ApiCompleteOrderRequest) returns (ApiCompleteOrderResponse);
-  rpc getOrders (ApiGetOrdersRequest) returns (stream ApiOrder);
+  rpc getOrders (ApiGetOrdersRequest) returns (ApiGetOrdersResponse);
 }
 
 message ApiOwner {
@@ -38,12 +38,13 @@ message ApiItem {
   string description = 4;
   string category = 5;
   bytes image = 6;
+  string restId = 7;
 }
 
 message ApiOrder {
   string id = 1;
   string itemName = 2;
-  float requested_at = 3;
+  float requestedAt = 3;
   bool completed = 4;
   int32 tableNumber = 5;
   string description = 6;
@@ -72,7 +73,7 @@ message ApiCreateRestaurantRequest {
   string jwt = 1;
   string name = 2;
   string description = 3;
-  bytes image = 4;
+  bytes logo = 4;
 }
 
 message ApiCreateRestaurantResponse {
@@ -93,7 +94,7 @@ message ApiUpdateRestaurantRequest {
   string restId = 2;
   string name = 3;
   string description = 4;
-  bytes image = 5;
+  bytes logo = 5;
 }
 
 message ApiUpdateRestaurantResponse {
@@ -104,16 +105,8 @@ message ApiGetRestaurantRequest {
   string restId = 1;
 }
 
-message ApiGetRestaurantResponse {
-  ApiRestaurant restaurant = 1;
-}
-
 message ApiGetRestaurantsRequest {
   string ownerId = 1;
-}
-
-message ApiGetRestaurantsResponse {
-  repeated ApiRestaurant restaurants = 1;
 }
 
 message ApiAddItemRequest {
@@ -157,17 +150,9 @@ message ApiGetItemRequest {
   string itemId = 1;
 }
 
-message ApiGetItemResponse {
-  ApiItem item = 1;
-}
-
 message ApiGetItemsRequest {
   string restId = 1;
   string category = 2;
-}
-
-message ApiGetItemsResponse {
-  repeated ApiItem items = 1;
 }
 
 message ApiMakeOrderRequest {
@@ -193,4 +178,8 @@ message ApiGetOrdersRequest {
   string jwt = 1;
   string restId = 2;
   float since = 3;
+}
+
+message ApiGetOrdersResponse {
+  repeated ApiOrder orders = 1;
 }

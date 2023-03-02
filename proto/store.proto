@@ -5,22 +5,22 @@ service Store {
   rpc createRestaurant(CreateRestaurantRequest) returns (CreateRestaurantResponse);
   rpc deleteRestaurant(DeleteRestaurantRequest) returns (DeleteRestaurantResponse);
   rpc updateRestaurant(UpdateRestaurantRequest) returns (UpdateRestaurantResponse);
-  rpc getRestaurant(GetRestaurantRequest) returns (GetRestaurantResponse);
-  rpc getRestaurants(GetRestaurantsRequest) returns (GetRestaurantsResponse);
+  rpc getRestaurant(GetRestaurantRequest) returns (Restaurant);
+  rpc getRestaurants(GetRestaurantsRequest) returns (stream Restaurant);
 }
 
 message Restaurant {
   string id = 1;
   string name = 2;
   string description = 3;
-  string logo = 4;
+  bytes logo = 4;
 }
 
 message CreateRestaurantRequest {
   string ownerId = 1;
   string name = 2;
   string description = 3;
-  bytes image = 4;
+  bytes logo = 4;
 }
 
 message CreateRestaurantResponse {
@@ -40,7 +40,7 @@ message UpdateRestaurantRequest {
   string restId = 1;
   string name = 2;
   string description = 3;
-  bytes image = 4;
+  bytes logo = 4;
   string ownerId = 5;
 }
 
@@ -52,15 +52,6 @@ message GetRestaurantRequest {
   string restId = 1;
 }
 
-message GetRestaurantResponse {
-  Restaurant restaurant = 1;
-  bytes image = 2;
-}
-
 message GetRestaurantsRequest {
   string ownerId = 1;
-}
-
-message GetRestaurantsResponse {
-  repeated Restaurant restaurants = 1;
 }

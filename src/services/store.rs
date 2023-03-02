@@ -6,6 +6,9 @@ use std::fs;
 use std::sync::Arc;
 use store_proto::store_server::Store;
 use store_proto::*;
+use tokio::sync::mpsc;
+use tokio_stream::wrappers::ReceiverStream;
+use tokio_stream::StreamExt;
 use tonic::{Code, Request, Response, Status};
 use uuid::Uuid;
 
@@ -52,7 +55,7 @@ impl Store for StoreService {
                 if result.rows_affected() == 0 {
                     return Err(Status::new(Code::PermissionDenied, ""));
                 }
-                if let Err(err) = fs::write(logo_path, req.image) {
+                if let Err(err) = fs::write(logo_path, req.logo) {
                     log::error!("Store Service: {}", err);
                     return Err(Status::new(Code::Internal, ""));
                 };
@@ -119,7 +122,7 @@ impl Store for StoreService {
                 if result.rows_affected() == 0 {
                     return Err(Status::new(Code::NotFound, ""));
                 }
-                if let Err(err) = fs::write(logo_path, req.image) {
+                if let Err(err) = fs::write(logo_path, req.logo) {
                     log::error!("Store Service: {}", err);
                     return Err(Status::new(Code::Internal, ""));
                 };
@@ -136,31 +139,27 @@ impl Store for StoreService {
     async fn get_restaurant(
         &self,
         request: Request<GetRestaurantRequest>,
-    ) -> Result<Response<GetRestaurantResponse>, Status> {
+    ) -> Result<Response<Restaurant>, Status> {
         let req = request.into_inner();
 
         let db_result = get_restaurant(&req.rest_id)
-            .map(|row| Restaurant {
-                id: row.get("id"),
-                name: row.get("name"),
-                description: row.get("description"),
-                logo: row.get("logo"),
-            })
             .fetch_one(self.pool.as_ref())
             .await;
 
-        let res = match db_result {
-            Ok(restaurant) => {
-                let image = match fs::read(&restaurant.logo) {
+        let restaurant = match db_result {
+            Ok(row) => {
+                let logo = match fs::read(row.get::<&str, &str>("logo")) {
                     Ok(bytes) => bytes,
                     Err(err) => {
                         log::error!("Store Service: {}", err);
                         return Err(Status::new(Code::Internal, ""));
                     }
                 };
-                GetRestaurantResponse {
-                    restaurant: Some(restaurant),
-                    image: image,
+                Restaurant {
+                    id: row.get("id"),
+                    name: row.get("name"),
+                    description: row.get("description"),
+                    logo: logo,
                 }
             }
             Err(err) => {
@@ -168,34 +167,45 @@ impl Store for StoreService {
                 return Err(Status::new(Code::Internal, ""));
             }
         };
-        Ok(Response::new(res))
+
+        Ok(Response::new(restaurant))
     }
+
+    type getRestaurantsStream = ReceiverStream<Result<Restaurant, Status>>;
 
     async fn get_restaurants(
         &self,
         request: Request<GetRestaurantsRequest>,
-    ) -> Result<Response<GetRestaurantsResponse>, Status> {
+    ) -> Result<Response<Self::getRestaurantsStream>, Status> {
         let req = request.into_inner();
+        let (tx, rx) = mpsc::channel(3);
+        let pool = self.pool.clone();
 
-        let db_result = get_restaurants(&req.owner_id)
-            .map(|row| Restaurant {
-                id: row.get("id"),
-                name: row.get("name"),
-                description: row.get("description"),
-                logo: row.get("logo"),
-            })
-            .fetch_all(self.pool.as_ref())
-            .await;
+        tokio::spawn(async move {
+            let mut db_stream = get_restaurants(&req.owner_id).fetch(pool.as_ref());
 
-        let res = match db_result {
-            Ok(restaurants) => GetRestaurantsResponse {
-                restaurants: restaurants,
-            },
-            Err(err) => {
-                log::error!("Store Service: {}", err);
-                return Err(Status::new(Code::Internal, ""));
+            while let Ok(Some(row)) = db_stream.try_next().await {
+                let logo = match fs::read::<&str>(row.get("logo")) {
+                    Ok(bytes) => bytes,
+                    Err(err) => {
+                        log::error!("Store Service: {}", err);
+                        return Err(Status::new(Code::Internal, ""));
+                    }
+                };
+                let restaurant = Restaurant {
+                    id: row.get("id"),
+                    name: row.get("name"),
+                    description: row.get("description"),
+                    logo: logo,
+                };
+                if let Err(err) = tx.send(Ok(restaurant)).await {
+                    log::warn!("Store Service: {}", err);
+                }
             }
-        };
-        Ok(Response::new(res))
+
+            Ok(())
+        });
+
+        Ok(Response::new(ReceiverStream::new(rx)))
     }
 }

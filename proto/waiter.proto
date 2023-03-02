@@ -4,7 +4,7 @@ package waiter;
 service Waiter {
   rpc makeOrder (MakeOrderRequest) returns (MakeOrderResponse);
   rpc completeOrder (CompleteOrderRequest) returns (CompleteOrderResponse);
-  rpc getOrders (GetOrdersRequest) returns (stream Order);
+  rpc getOrders (GetOrdersRequest) returns (GetOrdersResponse);
 }
 
 message Order {
@@ -39,4 +39,8 @@ message GetOrdersRequest {
   string restId = 1;
   float since = 2;
   string ownerId = 3;
+}
+
+message GetOrdersResponse {
+  repeated Order orders = 1;
 }

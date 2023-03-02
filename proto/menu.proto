@@ -5,8 +5,8 @@ service Menu {
   rpc addItem (AddItemRequest) returns (AddItemResponse);
   rpc removeItem(RemoveItemRequest) returns (RemoveItemResponse);
   rpc updateItem(UpdateItemRequest) returns (UpdateItemResponse);
-  rpc getItem(GetItemRequest) returns (GetItemResponse);
-  rpc getItems(GetItemsRequest) returns (GetItemsResponse);
+  rpc getItem(GetItemRequest) returns (Item);
+  rpc getItems(GetItemsRequest) returns (stream Item);
 }
 
 message Item {
@@ -15,7 +15,7 @@ message Item {
   float price = 3;
   string description = 4;
   string category = 5;
-  string image = 6;
+  bytes image = 6;
   string restId = 7;
 }
 
@@ -60,16 +60,7 @@ message GetItemRequest {
   string itemId = 1;
 }
 
-message GetItemResponse {
-  Item item = 1;
-  bytes image = 2;
-}
-
 message GetItemsRequest {
   string restId = 1;
   string category = 2;
-}
-
-message GetItemsResponse {
-  repeated Item items = 1;
 }

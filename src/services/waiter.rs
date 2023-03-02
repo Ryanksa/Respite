@@ -2,9 +2,6 @@ use lib::db::{complete_order, get_orders, insert_order};
 use sqlx::{Pool, Postgres, Row};
 use std::sync::Arc;
 use std::time::{SystemTime, UNIX_EPOCH};
-use tokio::sync::mpsc;
-use tokio_stream::wrappers::ReceiverStream;
-use tokio_stream::StreamExt;
 use tonic::{Code, Request, Response, Status};
 use uuid::Uuid;
 use waiter_proto::waiter_server::Waiter;
@@ -83,35 +80,32 @@ impl Waiter for WaiterService {
         Ok(Response::new(res))
     }
 
-    type getOrdersStream = ReceiverStream<Result<Order, Status>>;
-
     async fn get_orders(
         &self,
         request: Request<GetOrdersRequest>,
-    ) -> Result<Response<Self::getOrdersStream>, Status> {
+    ) -> Result<Response<GetOrdersResponse>, Status> {
         let req = request.into_inner();
-        let (tx, rx) = mpsc::channel(3);
-        let pool = self.pool.clone();
 
-        tokio::spawn(async move {
-            let mut db_stream = get_orders(&req.rest_id, &req.since, &req.owner_id)
-                .map(|row| Order {
-                    id: row.get("id"),
-                    item_name: row.get("name"),
-                    requested_at: row.get("requested_at"),
-                    completed: row.get("completed"),
-                    table_number: row.get("table_number"),
-                    description: row.get("description"),
-                })
-                .fetch(pool.as_ref());
+        let db_result = get_orders(&req.rest_id, &req.since, &req.owner_id)
+            .map(|row| Order {
+                id: row.get("id"),
+                item_name: row.get("name"),
+                requested_at: row.get("requested_at"),
+                completed: row.get("completed"),
+                table_number: row.get("table_number"),
+                description: row.get("description"),
+            })
+            .fetch_all(self.pool.as_ref())
+            .await;
 
-            while let Ok(Some(order)) = db_stream.try_next().await {
-                if let Err(err) = tx.send(Ok(order)).await {
-                    log::warn!("Waiter Service: {}", err);
-                }
+        let res = match db_result {
+            Ok(orders) => GetOrdersResponse { orders: orders },
+            Err(err) => {
+                log::error!("Order Service: {}", err);
+                return Err(Status::new(Code::Internal, ""));
             }
-        });
+        };
 
-        Ok(Response::new(ReceiverStream::new(rx)))
+        Ok(Response::new(res))
     }
 }

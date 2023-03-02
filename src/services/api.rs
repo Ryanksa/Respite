@@ -178,7 +178,7 @@ impl Api for ApiService {
                 owner_id: owner.id,
                 name: req.name,
                 description: req.description,
-                image: req.image,
+                logo: req.logo,
             })
             .await;
 
@@ -232,7 +232,7 @@ impl Api for ApiService {
                 rest_id: req.rest_id,
                 name: req.name,
                 description: req.description,
-                image: req.image,
+                logo: req.logo,
                 owner_id: owner.id,
             })
             .await;
@@ -250,7 +250,7 @@ impl Api for ApiService {
     async fn get_restaurant(
         &self,
         request: Request<ApiGetRestaurantRequest>,
-    ) -> Result<Response<ApiGetRestaurantResponse>, Status> {
+    ) -> Result<Response<ApiRestaurant>, Status> {
         let req = request.into_inner();
 
         let result = self
@@ -263,18 +263,12 @@ impl Api for ApiService {
 
         let res = match result {
             Ok(response) => {
-                let res = response.into_inner();
-                if let None = res.restaurant {
-                    return Err(Status::new(Code::NotFound, ""));
-                }
-                let restaurant = res.restaurant.unwrap();
-                ApiGetRestaurantResponse {
-                    restaurant: Some(ApiRestaurant {
-                        id: restaurant.id,
-                        name: restaurant.name,
-                        description: restaurant.description,
-                        logo: res.image,
-                    }),
+                let restaurant = response.into_inner();
+                ApiRestaurant {
+                    id: restaurant.id,
+                    name: restaurant.name,
+                    description: restaurant.description,
+                    logo: restaurant.logo,
                 }
             }
             Err(status) => return Err(status),
@@ -283,11 +277,14 @@ impl Api for ApiService {
         Ok(Response::new(res))
     }
 
+    type getRestaurantsStream = ReceiverStream<Result<ApiRestaurant, Status>>;
+
     async fn get_restaurants(
         &self,
         request: Request<ApiGetRestaurantsRequest>,
-    ) -> Result<Response<ApiGetRestaurantsResponse>, Status> {
+    ) -> Result<Response<Self::getRestaurantsStream>, Status> {
         let req = request.into_inner();
+        let (tx, rx) = mpsc::channel(3);
 
         let result = self
             .get_store_client()
@@ -297,27 +294,26 @@ impl Api for ApiService {
             })
             .await;
 
-        let res = match result {
-            Ok(response) => {
-                let res = response.into_inner();
-                let restaurants = res
-                    .restaurants
-                    .iter()
-                    .map(|restaurant| ApiRestaurant {
-                        id: restaurant.id.clone(),
-                        name: restaurant.name.clone(),
-                        description: restaurant.description.clone(),
-                        logo: vec![],
-                    })
-                    .collect();
-                ApiGetRestaurantsResponse {
-                    restaurants: restaurants,
+        if let Err(status) = result {
+            return Err(status);
+        }
+        let mut stream = result.unwrap().into_inner();
+
+        tokio::spawn(async move {
+            while let Ok(Some(restaurant)) = stream.message().await {
+                let api_restaurant = ApiRestaurant {
+                    id: restaurant.id,
+                    name: restaurant.name,
+                    description: restaurant.description,
+                    logo: restaurant.logo,
+                };
+                if let Err(err) = tx.send(Ok(api_restaurant)).await {
+                    log::warn!("Api Service: {}", err);
                 }
             }
-            Err(status) => return Err(status),
-        };
+        });
 
-        Ok(Response::new(res))
+        Ok(Response::new(ReceiverStream::new(rx)))
     }
 
     async fn add_item(
@@ -411,7 +407,7 @@ impl Api for ApiService {
     async fn get_item(
         &self,
         request: Request<ApiGetItemRequest>,
-    ) -> Result<Response<ApiGetItemResponse>, Status> {
+    ) -> Result<Response<ApiItem>, Status> {
         let req = request.into_inner();
 
         let result = self
@@ -424,20 +420,15 @@ impl Api for ApiService {
 
         let res = match result {
             Ok(response) => {
-                let res = response.into_inner();
-                if let None = res.item {
-                    return Err(Status::new(Code::NotFound, ""));
-                }
-                let item = res.item.unwrap();
-                ApiGetItemResponse {
-                    item: Some(ApiItem {
-                        id: item.id,
-                        name: item.name,
-                        price: item.price,
-                        description: item.description,
-                        category: item.category,
-                        image: res.image,
-                    }),
+                let item = response.into_inner();
+                ApiItem {
+                    id: item.id,
+                    name: item.name,
+                    price: item.price,
+                    description: item.description,
+                    category: item.category,
+                    image: item.image,
+                    rest_id: item.rest_id,
                 }
             }
             Err(status) => return Err(status),
@@ -446,11 +437,14 @@ impl Api for ApiService {
         Ok(Response::new(res))
     }
 
+    type getItemsStream = ReceiverStream<Result<ApiItem, Status>>;
+
     async fn get_items(
         &self,
         request: Request<ApiGetItemsRequest>,
-    ) -> Result<Response<ApiGetItemsResponse>, Status> {
+    ) -> Result<Response<Self::getItemsStream>, Status> {
         let req = request.into_inner();
+        let (tx, rx) = mpsc::channel(3);
 
         let result = self
             .get_menu_client()
@@ -461,27 +455,29 @@ impl Api for ApiService {
             })
             .await;
 
-        let res = match result {
-            Ok(response) => {
-                let res = response.into_inner();
-                let items = res
-                    .items
-                    .iter()
-                    .map(|item| ApiItem {
-                        id: item.id.clone(),
-                        name: item.name.clone(),
-                        price: item.price,
-                        description: item.description.clone(),
-                        category: item.category.clone(),
-                        image: vec![],
-                    })
-                    .collect();
-                ApiGetItemsResponse { items: items }
-            }
-            Err(status) => return Err(status),
-        };
+        if let Err(status) = result {
+            return Err(status);
+        }
+        let mut stream = result.unwrap().into_inner();
 
-        Ok(Response::new(res))
+        tokio::spawn(async move {
+            while let Ok(Some(item)) = stream.message().await {
+                let api_item = ApiItem {
+                    id: item.id,
+                    name: item.name,
+                    price: item.price,
+                    description: item.description,
+                    category: item.category,
+                    image: item.image,
+                    rest_id: item.rest_id,
+                };
+                if let Err(err) = tx.send(Ok(api_item)).await {
+                    log::warn!("Api Service: {}", err);
+                }
+            }
+        });
+
+        Ok(Response::new(ReceiverStream::new(rx)))
     }
 
     async fn make_order(
@@ -536,15 +532,12 @@ impl Api for ApiService {
         Ok(Response::new(res))
     }
 
-    type getOrdersStream = ReceiverStream<Result<ApiOrder, Status>>;
-
     async fn get_orders(
         &self,
         request: Request<ApiGetOrdersRequest>,
-    ) -> Result<Response<Self::getOrdersStream>, Status> {
+    ) -> Result<Response<ApiGetOrdersResponse>, Status> {
         let req = request.into_inner();
         let owner = self.authenticate(req.jwt).await?;
-        let (tx, rx) = mpsc::channel(3);
 
         let result = self
             .get_waiter_client()
@@ -556,27 +549,26 @@ impl Api for ApiService {
             })
             .await;
 
-        if let Err(status) = result {
-            return Err(status);
-        }
-        let mut stream = result.unwrap().into_inner();
-
-        tokio::spawn(async move {
-            while let Ok(Some(order)) = stream.message().await {
-                let api_order = ApiOrder {
-                    id: order.id,
-                    item_name: order.item_name,
-                    requested_at: order.requested_at,
-                    completed: order.completed,
-                    table_number: order.table_number,
-                    description: order.description,
-                };
-                if let Err(err) = tx.send(Ok(api_order)).await {
-                    log::warn!("Api Service: {}", err);
-                }
+        let res = match result {
+            Ok(response) => {
+                let res = response.into_inner();
+                let orders = res
+                    .orders
+                    .iter()
+                    .map(|order| ApiOrder {
+                        id: order.id.clone(),
+                        item_name: order.item_name.clone(),
+                        requested_at: order.requested_at,
+                        completed: order.completed,
+                        table_number: order.table_number,
+                        description: order.description.clone(),
+                    })
+                    .collect();
+                ApiGetOrdersResponse { orders: orders }
             }
-        });
+            Err(status) => return Err(status),
+        };
 
-        Ok(Response::new(ReceiverStream::new(rx)))
+        Ok(Response::new(res))
     }
 }

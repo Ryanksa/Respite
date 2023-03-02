@@ -4,6 +4,9 @@ use menu_proto::*;
 use sqlx::{Pool, Postgres, Row};
 use std::fs;
 use std::sync::Arc;
+use tokio::sync::mpsc;
+use tokio_stream::wrappers::ReceiverStream;
+use tokio_stream::StreamExt;
 use tonic::{Code, Request, Response, Status};
 use uuid::Uuid;
 
@@ -136,37 +139,28 @@ impl Menu for MenuService {
         Ok(Response::new(res))
     }
 
-    async fn get_item(
-        &self,
-        request: Request<GetItemRequest>,
-    ) -> Result<Response<GetItemResponse>, Status> {
+    async fn get_item(&self, request: Request<GetItemRequest>) -> Result<Response<Item>, Status> {
         let req = request.into_inner();
 
-        let db_result = get_item(&req.item_id)
-            .map(|row| Item {
-                id: row.get("id"),
-                name: row.get("name"),
-                price: row.get("price"),
-                description: row.get("description"),
-                category: row.get("category"),
-                image: row.get("image"),
-                rest_id: row.get("rest_id"),
-            })
-            .fetch_one(self.pool.as_ref())
-            .await;
+        let db_result = get_item(&req.item_id).fetch_one(self.pool.as_ref()).await;
 
-        let res = match db_result {
-            Ok(item) => {
-                let image = match fs::read(&item.image) {
+        let item = match db_result {
+            Ok(row) => {
+                let image = match fs::read(row.get::<&str, &str>("image")) {
                     Ok(bytes) => bytes,
                     Err(err) => {
                         log::error!("Menu Service: {}", err);
                         return Err(Status::new(Code::Internal, ""));
                     }
                 };
-                GetItemResponse {
-                    item: Some(item),
+                Item {
+                    id: row.get("id"),
+                    name: row.get("name"),
+                    price: row.get("price"),
+                    description: row.get("description"),
+                    category: row.get("category"),
                     image: image,
+                    rest_id: row.get("rest_id"),
                 }
             }
             Err(err) => {
@@ -174,35 +168,48 @@ impl Menu for MenuService {
                 return Err(Status::new(Code::Internal, ""));
             }
         };
-        Ok(Response::new(res))
+
+        Ok(Response::new(item))
     }
+
+    type getItemsStream = ReceiverStream<Result<Item, Status>>;
 
     async fn get_items(
         &self,
         request: Request<GetItemsRequest>,
-    ) -> Result<Response<GetItemsResponse>, Status> {
+    ) -> Result<Response<Self::getItemsStream>, Status> {
         let req = request.into_inner();
+        let (tx, rx) = mpsc::channel(3);
+        let pool = self.pool.clone();
 
-        let db_result = get_items(&req.rest_id, &req.category)
-            .map(|row| Item {
-                id: row.get("id"),
-                name: row.get("name"),
-                price: row.get("price"),
-                description: row.get("description"),
-                category: row.get("category"),
-                image: row.get("image"),
-                rest_id: row.get("rest_id"),
-            })
-            .fetch_all(self.pool.as_ref())
-            .await;
+        tokio::spawn(async move {
+            let mut db_stream = get_items(&req.rest_id, &req.category).fetch(pool.as_ref());
 
-        let res = match db_result {
-            Ok(items) => GetItemsResponse { items: items },
-            Err(err) => {
-                log::error!("Menu Service: {}", err);
-                return Err(Status::new(Code::Internal, ""));
+            while let Ok(Some(row)) = db_stream.try_next().await {
+                let image = match fs::read::<&str>(row.get("image")) {
+                    Ok(bytes) => bytes,
+                    Err(err) => {
+                        log::error!("Menu Service: {}", err);
+                        return Err(Status::new(Code::Internal, ""));
+                    }
+                };
+                let item = Item {
+                    id: row.get("id"),
+                    name: row.get("name"),
+                    price: row.get("price"),
+                    description: row.get("description"),
+                    category: row.get("category"),
+                    image: image,
+                    rest_id: row.get("rest_id"),
+                };
+                if let Err(err) = tx.send(Ok(item)).await {
+                    log::warn!("Menu Service: {}", err);
+                }
             }
-        };
-        Ok(Response::new(res))
+
+            Ok(())
+        });
+
+        Ok(Response::new(ReceiverStream::new(rx)))
     }
 }
