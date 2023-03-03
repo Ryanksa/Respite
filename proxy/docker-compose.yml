@@ -1,7 +1,8 @@
-version: '3'
+version: "3.8"
 services:
   envoy:
     image: envoyproxy/envoy-dev:e0d2927fd6d7cbf4d0a79854123d12f07bc1091c
+    container_name: envoy
     ports:
       - "5000:5000"
       - "9901:9901"

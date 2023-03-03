@@ -1,5 +1,7 @@
 /target
 /db
+/proxy
 /web
 .gitignore
 Config.toml
+README.md

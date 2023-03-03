@@ -23,6 +23,7 @@
     "@tailwindcss/typography": "^0.5.9",
     "daisyui": "^2.51.0",
     "grpc-web": "^1.4.2",
+    "redis": "^4.6.5",
     "solid-icons": "^1.0.4",
     "solid-js": "^1.6.11",
     "solid-start": "^0.2.21",

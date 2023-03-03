@@ -554,14 +554,14 @@ impl Api for ApiService {
                 let res = response.into_inner();
                 let orders = res
                     .orders
-                    .iter()
+                    .into_iter()
                     .map(|order| ApiOrder {
-                        id: order.id.clone(),
-                        item_name: order.item_name.clone(),
+                        id: order.id,
+                        item_name: order.item_name,
                         requested_at: order.requested_at,
                         completed: order.completed,
                         table_number: order.table_number,
-                        description: order.description.clone(),
+                        description: order.description,
                     })
                     .collect();
                 ApiGetOrdersResponse { orders: orders }

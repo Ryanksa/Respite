@@ -93,3 +93,10 @@ npm install
 npm run build
 npm run start
 ```
+
+To run with docker, build the web image and run the server along with redis:
+
+```
+docker build -t web .
+docker-compose up -d
+```
