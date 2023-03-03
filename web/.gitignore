@@ -25,4 +25,3 @@ Thumbs.db
 
 .env
 /src/services/proto
-/redis-volume

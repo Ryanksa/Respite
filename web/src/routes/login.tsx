@@ -4,12 +4,12 @@ import { apiClient } from "~/services/api";
 import { ApiSignInRequest } from "~/services/proto/api";
 import TransitionIn from "~/components/TransitionIn";
 import Alert from "~/components/Alert";
+import { setSessionStore } from "~/lib/stores";
 
 export default function Login() {
   const [email, setEmail] = createSignal("");
   const [password, setPassword] = createSignal("");
   const [error, setError] = createSignal("");
-
   const navigate = useNavigate();
 
   const login = () => {
@@ -21,11 +21,13 @@ export default function Login() {
     apiClient
       .signIn(request)
       .then((unaryCall) => {
-        sessionStorage.setItem("jwt", unaryCall.response.jwt);
-        sessionStorage.setItem(
-          "owner",
-          JSON.stringify(unaryCall.response.owner)
-        );
+        setSessionStore({
+          jwt: unaryCall.response.jwt,
+          owner: {
+            id: unaryCall.response.owner!.id,
+            email: unaryCall.response.owner!.email,
+          },
+        });
         navigate("/");
       })
       .catch(() => {

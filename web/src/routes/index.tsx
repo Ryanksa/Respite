@@ -1,14 +1,14 @@
-import { createEffect } from "solid-js";
 import { useNavigate } from "solid-start";
+import { sessionStore } from "~/lib/stores";
 
 export default function Landing() {
   const navigate = useNavigate();
 
-  createEffect(() => {
-    const jwt = sessionStorage.getItem("jwt");
-    if (jwt) navigate("/app");
-    else navigate("/login");
-  });
+  if (sessionStore.jwt === "") {
+    navigate("/login");
+  } else {
+    navigate("/app");
+  }
 
   return <></>;
 }

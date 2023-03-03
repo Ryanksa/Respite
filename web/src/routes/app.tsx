@@ -1,16 +1,13 @@
-import { createEffect } from "solid-js";
 import { useNavigate, A, Outlet } from "solid-start";
 import { HiSolidMenuAlt3 } from "solid-icons/hi";
+import { sessionStore } from "~/lib/stores";
 
 export default function AppLayout() {
   const navigate = useNavigate();
 
-  createEffect(() => {
-    const jwt = sessionStorage.getItem("jwt");
-    if (!jwt) {
-      navigate("/login");
-    }
-  });
+  if (sessionStore.jwt === "") {
+    navigate("/login");
+  }
 
   return (
     <main data-theme="winter" class="p-8 flex flex-col gap-16">
