@@ -25,7 +25,7 @@ export default function Restaurant() {
   return (
     <div class="w-4/5 max-w-2xl m-auto flex flex-col gap-8">
       <h1 class="text-xl text-primary-focus font-semibold">
-        Start a new restaurant
+        Create a Restaurant
       </h1>
       <div class="flex gap-4 flex-col md:flex-row">
         <div class="flex flex-col items-center gap-4">

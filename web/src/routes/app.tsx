@@ -69,7 +69,7 @@ export default function AppLayout() {
               {(restaurant) => <div>{restaurant.name}</div>}
             </For>
             <A href="/app/restaurant" class="btn btn-secondary btn-sm">
-              start a new restaurant
+              new restaurant
             </A>
             <div class="mt-auto flex items-center justify-evenly">
               <RiSystemMenuUnfoldLine
