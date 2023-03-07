@@ -1,5 +1,5 @@
 import { createSignal, Show } from "solid-js";
-import { useNavigate, A } from "solid-start";
+import { useNavigate, A, createRouteAction } from "solid-start";
 import { apiClient } from "~/services/api";
 import { ApiSignUpRequest } from "~/services/proto/api";
 import Alert from "~/components/Alert";
@@ -9,24 +9,21 @@ export default function SignUp() {
   const [email, setEmail] = createSignal("");
   const [password, setPassword] = createSignal("");
   const [error, setError] = createSignal("");
-
   const navigate = useNavigate();
 
-  const signUp = () => {
+  const [signingUp, signUp] = createRouteAction(async () => {
     const request: ApiSignUpRequest = {
       email: email(),
       password: password(),
     };
 
-    apiClient
-      .signUp(request)
-      .then(() => {
-        navigate("/login");
-      })
-      .catch(() => {
-        setError("Invalid email or password!");
-      });
-  };
+    try {
+      await apiClient.signUp(request);
+      navigate("/login");
+    } catch {
+      setError("Invalid email or password!");
+    }
+  });
 
   return (
     <main data-theme="winter" class="p-8 flex flex-col gap-16">
@@ -75,7 +72,8 @@ export default function SignUp() {
           </div>
           <button
             class="btn w-full max-w-xs m-auto opacity-90"
-            onClick={signUp}
+            onClick={() => signUp()}
+            disabled={signingUp.pending}
           >
             Finish
           </button>

@@ -1,5 +1,5 @@
 import { createSignal } from "solid-js";
-import { useNavigate, A } from "solid-start";
+import { useNavigate, A, createRouteAction } from "solid-start";
 import { apiClient } from "~/services/api";
 import { ApiSignInRequest } from "~/services/proto/api";
 import TransitionIn from "~/components/TransitionIn";
@@ -12,28 +12,26 @@ export default function Login() {
   const [error, setError] = createSignal("");
   const navigate = useNavigate();
 
-  const login = () => {
+  const [loggingIn, login] = createRouteAction(async () => {
     const request: ApiSignInRequest = {
       email: email(),
       password: password(),
     };
 
-    apiClient
-      .signIn(request)
-      .then((unaryCall) => {
-        setSessionStore({
-          jwt: unaryCall.response.jwt,
-          owner: {
-            id: unaryCall.response.owner!.id,
-            email: unaryCall.response.owner!.email,
-          },
-        });
-        navigate("/");
-      })
-      .catch(() => {
-        setError("Invalid email or password!");
+    try {
+      const unaryCall = await apiClient.signIn(request);
+      setSessionStore({
+        jwt: unaryCall.response.jwt,
+        owner: {
+          id: unaryCall.response.owner!.id,
+          email: unaryCall.response.owner!.email,
+        },
       });
-  };
+      navigate("/");
+    } catch {
+      setError("Invalid email or password!");
+    }
+  });
 
   return (
     <>
@@ -60,7 +58,11 @@ export default function Login() {
               value={password()}
             />
           </div>
-          <button class="btn w-full max-w-xs m-auto opacity-90" onClick={login}>
+          <button
+            class="btn w-full max-w-xs m-auto opacity-90"
+            onClick={() => login()}
+            disabled={loggingIn.pending}
+          >
             Login
           </button>
         </div>

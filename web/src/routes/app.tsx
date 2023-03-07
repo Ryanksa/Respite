@@ -1,11 +1,36 @@
-import { createSignal, Show } from "solid-js";
-import { useNavigate, A, Outlet } from "solid-start";
+import { createSignal, Show, For } from "solid-js";
+import { useNavigate, A, Outlet, useRouteData } from "solid-start";
+import { createServerData$ } from "solid-start/server";
 import { HiSolidMenuAlt3 } from "solid-icons/hi";
 import { RiSystemMenuUnfoldLine } from "solid-icons/ri";
 import { AiOutlineLogout } from "solid-icons/ai";
 import { sessionStore, setSessionStore } from "~/lib/stores";
+import { apiClient } from "~/services/api";
+import { ApiGetRestaurantsRequest, ApiRestaurant } from "~/services/proto/api";
+
+export function routeData() {
+  return createServerData$(async () => {
+    try {
+      const restaurants: ApiRestaurant[] = [];
+
+      const request: ApiGetRestaurantsRequest = {
+        ownerId: sessionStore.owner.id,
+      };
+      const stream = apiClient.getRestaurants(request).responses;
+      for await (const restaurant of stream) {
+        restaurants.push(restaurant);
+      }
+
+      return restaurants;
+    } catch {
+      return [];
+    }
+  });
+}
 
 export default function AppLayout() {
+  const restaurants = useRouteData<typeof routeData>();
+
   const [expanded, setExpanded] = createSignal(false);
   const navigate = useNavigate();
 
@@ -36,10 +61,16 @@ export default function AppLayout() {
             />
           }
         >
-          <div class="fixed top-0 right-0 h-screen w-full sm:w-64 flex flex-col gap-4 px-4 py-8 bg-gradient-to-r from-neutral to-neutral/90">
+          <div class="fixed top-0 right-0 h-screen w-full sm:w-64 flex flex-col gap-4 px-4 py-8 bg-gradient-to-r from-neutral-focus to-neutral/90">
             <h3 class="text-neutral-content text-center text-xl font-semibold">
               My Restaurants
             </h3>
+            <For each={restaurants()}>
+              {(restaurant) => <div>{restaurant.name}</div>}
+            </For>
+            <A href="/app/restaurant" class="btn btn-secondary btn-sm">
+              start a new restaurant
+            </A>
             <div class="mt-auto flex items-center justify-evenly">
               <RiSystemMenuUnfoldLine
                 class="w-12 h-12 p-2 cursor-pointer rounded-full hover:bg-neutral-content/30 hover:scale-125 transition-all fill-neutral-content"
@@ -53,7 +84,7 @@ export default function AppLayout() {
             <svg
               viewBox="0 0 1200 120"
               preserveAspectRatio="none"
-              class="hidden sm:block rotate-90 fill-neutral scale-150 absolute -left-[21.5rem] top-72"
+              class="hidden sm:block rotate-90 fill-neutral-focus scale-150 absolute -left-[21.5rem] top-72"
             >
               <path d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0V27.35A600.21,600.21,0,0,0,321.39,56.44Z" />
             </svg>
