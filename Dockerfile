@@ -10,6 +10,6 @@ ARG service
 ENV service=$service
 
 RUN cargo build --release --bin $service
-RUN mkdir /app/target/release/img
+RUN mkdir /app/img
 
 CMD /app/target/release/$service

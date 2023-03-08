@@ -1,6 +1,11 @@
 import { createSignal, Show, For } from "solid-js";
-import { useNavigate, A, Outlet, useRouteData } from "solid-start";
-import { createServerData$ } from "solid-start/server";
+import {
+  useNavigate,
+  A,
+  Outlet,
+  useRouteData,
+  createRouteData,
+} from "solid-start";
 import { HiSolidMenuAlt3 } from "solid-icons/hi";
 import { RiSystemMenuUnfoldLine } from "solid-icons/ri";
 import { AiOutlineLogout } from "solid-icons/ai";
@@ -9,17 +14,20 @@ import { apiClient } from "~/services/api";
 import { ApiGetRestaurantsRequest, ApiRestaurant } from "~/services/proto/api";
 
 export function routeData() {
-  return createServerData$(async () => {
+  return createRouteData(async () => {
     try {
       const restaurants: ApiRestaurant[] = [];
 
       const request: ApiGetRestaurantsRequest = {
         ownerId: sessionStore.owner.id,
       };
-      const stream = apiClient.getRestaurants(request).responses;
-      for await (const restaurant of stream) {
+
+      const call = apiClient.getRestaurants(request);
+      for await (const restaurant of call.responses) {
         restaurants.push(restaurant);
       }
+      await call.status;
+      await call.trailers;
 
       return restaurants;
     } catch {
@@ -61,12 +69,34 @@ export default function AppLayout() {
             />
           }
         >
-          <div class="fixed top-0 right-0 h-screen w-full sm:w-64 flex flex-col gap-4 px-4 py-8 bg-gradient-to-r from-neutral-focus to-neutral/90">
+          <div class="fixed top-0 right-0 h-screen w-full sm:w-64 flex flex-col gap-6 px-4 py-8 bg-gradient-to-r from-neutral-focus to-neutral/90">
             <h3 class="text-neutral-content text-center text-xl font-semibold">
               My Restaurants
             </h3>
             <For each={restaurants()}>
-              {(restaurant) => <div>{restaurant.name}</div>}
+              {(restaurant) => {
+                const imgUrl = URL.createObjectURL(
+                  new Blob([restaurant.logo], {
+                    type: "image/*",
+                  })
+                );
+                return (
+                  <A
+                    href={`/app/${restaurant.id}`}
+                    class="py-2 px-4 rounded-md hover:bg-primary-content/25 flex gap-3"
+                  >
+                    <img src={imgUrl} class="w-16 object-contain rounded" />
+                    <div>
+                      <h4 class="text-xl font-semibold text-primary">
+                        {restaurant.name}
+                      </h4>
+                      <div class="text-xs text-neutral-content/75">
+                        {restaurant.description}
+                      </div>
+                    </div>
+                  </A>
+                );
+              }}
             </For>
             <A href="/app/restaurant" class="btn btn-secondary btn-sm">
               new restaurant

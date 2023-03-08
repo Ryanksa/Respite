@@ -27,7 +27,7 @@ export default function Login() {
           email: unaryCall.response.owner!.email,
         },
       });
-      navigate("/");
+      navigate("/app");
     } catch {
       setError("Invalid email or password!");
     }

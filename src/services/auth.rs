@@ -4,11 +4,12 @@ use argon2::{
 };
 use auth_proto::auth_server::Auth;
 use auth_proto::*;
-use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation};
+use jsonwebtoken::{decode, encode, Algorithm, DecodingKey, EncodingKey, Header, Validation};
 use lib::db::{get_owner_by_email, get_owner_by_id, insert_owner};
 use serde::{Deserialize, Serialize};
 use sqlx::{Pool, Postgres, Row};
 use std::sync::Arc;
+use std::time::{Duration, SystemTime};
 use tonic::{Code, Request, Response, Status};
 use uuid::Uuid;
 
@@ -20,6 +21,7 @@ pub mod auth_proto {
 struct JWTOwner {
     id: String,
     email: String,
+    exp: usize,
 }
 
 pub struct AuthService {
@@ -98,12 +100,24 @@ impl Auth for AuthService {
             return Err(Status::new(Code::PermissionDenied, ""));
         };
 
+        let header = Header {
+            alg: Algorithm::HS512,
+            ..Default::default()
+        };
+
+        let tomorrow = SystemTime::now() + Duration::from_secs(24 * 60 * 60);
+        let exp = tomorrow
+            .duration_since(SystemTime::UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_secs();
         let owner = JWTOwner {
             id: row.get("id"),
             email: row.get("email"),
+            exp: exp as usize,
         };
+
         let res = match encode(
-            &Header::default(),
+            &header,
             &owner,
             &EncodingKey::from_secret(self.jwt_secret.as_ref()),
         ) {
@@ -131,7 +145,7 @@ impl Auth for AuthService {
         let token_data = match decode::<JWTOwner>(
             &req.jwt,
             &DecodingKey::from_secret(self.jwt_secret.as_ref()),
-            &Validation::default(),
+            &Validation::new(Algorithm::HS512),
         ) {
             Ok(data) => data,
             Err(err) => {

@@ -1,14 +1,17 @@
 import { createSignal } from "solid-js";
-import { createRouteAction } from "solid-start";
+import { createRouteAction, useNavigate } from "solid-start";
 import { apiClient } from "~/services/api";
 import { ApiCreateRestaurantRequest } from "~/services/proto/api";
 import { sessionStore } from "~/lib/stores";
+import Alert from "~/components/Alert";
 import { AiFillFileImage } from "solid-icons/ai";
 
 export default function Restaurant() {
   const [name, setName] = createSignal("");
   const [description, setDescription] = createSignal("");
   const [logo, setLogo] = createSignal<Uint8Array>(new Uint8Array());
+  const [error, setError] = createSignal("");
+  const navigate = useNavigate();
   let preview: HTMLImageElement;
 
   const [creatingRestaurant, createRestaurant] = createRouteAction(async () => {
@@ -19,7 +22,12 @@ export default function Restaurant() {
       logo: logo(),
     };
 
-    await apiClient.createRestaurant(request);
+    try {
+      await apiClient.createRestaurant(request);
+      navigate("/app");
+    } catch {
+      setError("Failed create the restaurant...");
+    }
   });
 
   return (
@@ -91,6 +99,7 @@ export default function Restaurant() {
       >
         Create
       </button>
+      <Alert message={error()} dismiss={() => setError("")} />
     </div>
   );
 }
