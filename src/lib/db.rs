@@ -103,8 +103,11 @@ pub fn insert_item<'q>(
 ) -> Query<'q, Postgres, PgArguments> {
     return query(
         "
-        IF EXISTS (SELECT 1 FROM restaurants WHERE id = $6 AND owner_id = $7) 
-        INSERT INTO items VALUES ($1, $2, $3, $4, $5, $6, $7)
+        INSERT INTO items
+        SELECT $1, $2, $3, $4, $5, $6, $7
+        WHERE NOT EXISTS (
+            SELECT 1 FROM restaurants WHERE id = $6 AND owner_id = $7
+        )
         ",
     )
     .bind(id)

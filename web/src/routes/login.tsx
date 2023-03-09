@@ -20,13 +20,17 @@ export default function Login() {
 
     try {
       const unaryCall = await apiClient.signIn(request);
-      setSessionStore({
+      const session = {
         jwt: unaryCall.response.jwt,
         owner: {
           id: unaryCall.response.owner!.id,
           email: unaryCall.response.owner!.email,
         },
-      });
+      };
+
+      sessionStorage.setItem("jwt", session.jwt);
+      sessionStorage.setItem("owner", JSON.stringify(session.owner));
+      setSessionStore(session);
       navigate("/app");
     } catch {
       setError("Invalid email or password!");

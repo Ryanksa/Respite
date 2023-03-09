@@ -19,7 +19,7 @@ CREATE TABLE IF NOT EXISTS restaurants (
 CREATE TABLE IF NOT EXISTS items (
   id VARCHAR(64) PRIMARY KEY,
   name VARCHAR(128) NOT NULL,
-  price DECIMAL NOT NULL,
+  price REAL NOT NULL,
   description text,
   category VARCHAR(128),
   image VARCHAR(128),
@@ -29,7 +29,7 @@ CREATE TABLE IF NOT EXISTS items (
 CREATE TABLE IF NOT EXISTS orders (
   id VARCHAR(64) PRIMARY KEY,
   item_id VARCHAR(64) REFERENCES items(id),
-  requested_at DECIMAL NOT NULL,
+  requested_at REAL NOT NULL,
   completed BOOLEAN NOT NULL,
   table_number SMALLINT,
   description text

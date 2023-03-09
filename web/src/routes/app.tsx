@@ -1,4 +1,4 @@
-import { createSignal, Show, For } from "solid-js";
+import { createSignal, createEffect, Show, For } from "solid-js";
 import {
   useNavigate,
   A,
@@ -11,42 +11,59 @@ import { RiSystemMenuUnfoldLine } from "solid-icons/ri";
 import { AiOutlineLogout } from "solid-icons/ai";
 import { sessionStore, setSessionStore } from "~/lib/stores";
 import { apiClient } from "~/services/api";
-import { ApiGetRestaurantsRequest, ApiRestaurant } from "~/services/proto/api";
+import {
+  ApiGetRestaurantsRequest,
+  ApiRestaurant,
+  ApiOwner,
+} from "~/services/proto/api";
 
 export function routeData() {
   return createRouteData(async () => {
+    const restaurants: ApiRestaurant[] = [];
+
+    const request: ApiGetRestaurantsRequest = {
+      ownerId: sessionStore.owner.id,
+    };
+
     try {
-      const restaurants: ApiRestaurant[] = [];
-
-      const request: ApiGetRestaurantsRequest = {
-        ownerId: sessionStore.owner.id,
-      };
-
       const call = apiClient.getRestaurants(request);
       for await (const restaurant of call.responses) {
         restaurants.push(restaurant);
       }
       await call.status;
       await call.trailers;
+    } catch {}
 
-      return restaurants;
-    } catch {
-      return [];
-    }
+    return restaurants;
   });
 }
 
 export default function AppLayout() {
   const restaurants = useRouteData<typeof routeData>();
 
-  const [expanded, setExpanded] = createSignal(false);
+  const [expanded, setExpanded] = createSignal(true);
   const navigate = useNavigate();
 
-  if (sessionStore.jwt === "") {
-    navigate("/login");
-  }
+  createEffect(() => {
+    const jwt = sessionStorage.getItem("jwt");
+    const owner = sessionStorage.getItem("owner");
+
+    if (jwt && owner) {
+      const apiOwner = JSON.parse(owner) as ApiOwner;
+      setSessionStore({
+        jwt: jwt,
+        owner: apiOwner,
+      });
+    }
+
+    if (!sessionStore.jwt) {
+      navigate("/login");
+    }
+  });
 
   const logout = () => {
+    sessionStorage.removeItem("jwt");
+    sessionStorage.removeItem("owner");
     setSessionStore({
       jwt: "",
       owner: { id: "", email: "" },
@@ -69,7 +86,7 @@ export default function AppLayout() {
             />
           }
         >
-          <div class="fixed top-0 right-0 h-screen w-full sm:w-64 flex flex-col gap-6 px-4 py-8 bg-gradient-to-r from-neutral-focus to-neutral/90">
+          <div class="fixed top-0 right-0 h-screen w-full sm:w-64 flex flex-col gap-6 px-4 py-8 bg-gradient-to-r from-neutral-focus to-neutral/90 z-50">
             <h3 class="text-neutral-content text-center text-xl font-semibold">
               My Restaurants
             </h3>
@@ -84,6 +101,7 @@ export default function AppLayout() {
                   <A
                     href={`/app/${restaurant.id}`}
                     class="py-2 px-4 rounded-md hover:bg-primary-content/25 flex gap-3"
+                    onClick={() => setExpanded(false)}
                   >
                     <img src={imgUrl} class="w-16 object-contain rounded" />
                     <div>
@@ -98,7 +116,11 @@ export default function AppLayout() {
                 );
               }}
             </For>
-            <A href="/app/restaurant" class="btn btn-secondary btn-sm">
+            <A
+              href="/app"
+              class="btn btn-secondary btn-sm"
+              onClick={() => setExpanded(false)}
+            >
               new restaurant
             </A>
             <div class="mt-auto flex items-center justify-evenly">
