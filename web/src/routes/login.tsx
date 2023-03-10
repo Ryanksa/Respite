@@ -31,6 +31,7 @@ export default function Login() {
       sessionStorage.setItem("jwt", session.jwt);
       sessionStorage.setItem("owner", JSON.stringify(session.owner));
       setSessionStore(session);
+
       navigate("/app");
     } catch {
       setError("Invalid email or password!");

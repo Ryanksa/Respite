@@ -1,4 +1,5 @@
 import { createStore } from "solid-js/store";
+import { ApiRestaurant } from "~/services/proto/api";
 import { Session } from "./types";
 
 export const [sessionStore, setSessionStore] = createStore<Session>({
@@ -8,3 +9,7 @@ export const [sessionStore, setSessionStore] = createStore<Session>({
     email: "",
   },
 });
+
+export const [restaurantsStore, setRestaurantsStore] = createStore<
+  ApiRestaurant[]
+>([]);

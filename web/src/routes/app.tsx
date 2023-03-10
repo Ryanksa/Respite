@@ -9,7 +9,11 @@ import {
 import { HiSolidMenuAlt3 } from "solid-icons/hi";
 import { RiSystemMenuUnfoldLine } from "solid-icons/ri";
 import { AiOutlineLogout } from "solid-icons/ai";
-import { sessionStore, setSessionStore } from "~/lib/stores";
+import {
+  sessionStore,
+  setSessionStore,
+  setRestaurantsStore,
+} from "~/lib/stores";
 import { apiClient } from "~/services/api";
 import {
   ApiGetRestaurantsRequest,
@@ -18,24 +22,31 @@ import {
 } from "~/services/proto/api";
 
 export function routeData() {
-  return createRouteData(async () => {
-    const restaurants: ApiRestaurant[] = [];
+  return createRouteData(
+    async () => {
+      const restaurants: ApiRestaurant[] = [];
 
-    const request: ApiGetRestaurantsRequest = {
-      ownerId: sessionStore.owner.id,
-    };
+      const request: ApiGetRestaurantsRequest = {
+        ownerId: sessionStore.owner.id,
+      };
 
-    try {
-      const call = apiClient.getRestaurants(request);
-      for await (const restaurant of call.responses) {
-        restaurants.push(restaurant);
-      }
-      await call.status;
-      await call.trailers;
-    } catch {}
+      try {
+        const call = apiClient.getRestaurants(request);
+        for await (const restaurant of call.responses) {
+          restaurants.push(restaurant);
+        }
+        await call.status;
+        await call.trailers;
+      } catch {}
 
-    return restaurants;
-  });
+      setRestaurantsStore(restaurants);
+
+      return restaurants;
+    },
+    {
+      initialValue: [],
+    }
+  );
 }
 
 export default function AppLayout() {

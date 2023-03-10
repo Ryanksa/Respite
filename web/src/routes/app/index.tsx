@@ -26,7 +26,7 @@ export default function App() {
       const call = await apiClient.createRestaurant(request);
       navigate(`/app/${call.response.restId}`);
     } catch {
-      setError("Failed create the restaurant...");
+      setError("Failed to create the restaurant...");
     }
   });
 
