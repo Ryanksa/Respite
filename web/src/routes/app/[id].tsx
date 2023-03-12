@@ -20,6 +20,8 @@ export default function Restaurant() {
     setRestaurant(restaurantsStore.find((rest) => rest.id === params.id));
   });
 
+  // Refetching this resource doesn't seem to update DOM
+  // Possibly a bug with this version (0.2.21) of SolidStart
   const [items, { mutate, refetch }] = createResource(
     () => params.id,
     async (restId) => {

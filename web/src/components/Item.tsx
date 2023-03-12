@@ -15,16 +15,18 @@ export default function Item(props: Props) {
           <span class="text-lg">{props.item.price}</span>
         </h6>
       </div>
-      <div class="grid place-items-center">
-        <img
-          src={URL.createObjectURL(
-            new Blob([props.item.image], {
-              type: "image/*",
-            })
-          )}
-          class="w-24 object-contain rounded"
-        />
-      </div>
+      {props.item.image.length > 0 && (
+        <div class="grid place-items-center">
+          <img
+            src={URL.createObjectURL(
+              new Blob([props.item.image], {
+                type: "image/*",
+              })
+            )}
+            class="w-24 object-contain rounded"
+          />
+        </div>
+      )}
     </div>
   );
 }

@@ -14,6 +14,8 @@ export default function RestaurantMenu() {
   const [restaurant, setRestaurant] = createSignal<ApiRestaurant>();
   const [items, setItems] = createSignal<ApiItem[]>();
 
+  // Fetching data with createResource or createServerData$ causes an undefined error
+  // Possibly a bug with this version (0.2.21) of SolidStart
   (async function () {
     try {
       const restRequest: ApiGetRestaurantRequest = {

@@ -40,10 +40,10 @@ export default function Menu(props: Props) {
           class="w-24 object-contain rounded"
         />
         <div>
-          <h4 class="text-3xl font-bold text-primary-focus">
+          <h4 class="text-3xl font-bold text-base-content">
             {props.restaurant.name}
           </h4>
-          <div class="text-sm text-primary-focus/75">
+          <div class="text-sm text-base-content/75">
             {props.restaurant.description}
           </div>
         </div>
