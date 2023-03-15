@@ -22,8 +22,6 @@ import {
 } from "~/services/proto/api";
 
 export function routeData() {
-  // If data is fetched too late, the DOM doesn't get updated with it
-  // Possibly a bug with this version (0.2.21) of SolidStart
   return createRouteData(
     async () => {
       const restaurants: ApiRestaurant[] = [];

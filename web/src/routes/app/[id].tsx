@@ -1,9 +1,11 @@
-import { createSignal, createEffect, createResource, Show } from "solid-js";
+import { createSignal, createEffect, Show } from "solid-js";
+import { createStore, reconcile } from "solid-js/store";
 import { useParams } from "solid-start";
 import Menu from "~/components/Menu";
 import { sessionStore, restaurantsStore } from "~/lib/stores";
 import { apiClient } from "~/services/api";
 import {
+  ApiGetItemRequest,
   ApiGetItemsRequest,
   ApiItem,
   ApiAddItemRequest,
@@ -15,35 +17,43 @@ export default function Restaurant() {
   const [restaurant, setRestaurant] = createSignal(
     restaurantsStore.find((rest) => rest.id === params.id)
   );
+  const [items, setItems] = createStore<{ [category: string]: ApiItem[] }>({});
+  const [fetchItemId, setFetchItemId] = createSignal("");
 
-  createEffect(() => {
+  createEffect(async () => {
     setRestaurant(restaurantsStore.find((rest) => rest.id === params.id));
+
+    setItems(reconcile({}));
+    const request: ApiGetItemsRequest = {
+      restId: params.id,
+      category: "",
+    };
+    try {
+      const call = apiClient.getItems(request);
+      for await (const item of call.responses) {
+        if (item.category in items) {
+          setItems(item.category, (prev) => [...prev, item]);
+        } else {
+          setItems(item.category, [item]);
+        }
+      }
+      await call.status;
+      await call.trailers;
+    } catch {}
   });
 
-  // Refetching this resource doesn't seem to update DOM
-  // Possibly a bug with this version (0.2.21) of SolidStart
-  const [items, { mutate, refetch }] = createResource(
-    () => params.id,
-    async (restId) => {
-      const apiItems: ApiItem[] = [];
-
-      const request: ApiGetItemsRequest = {
-        restId: restId,
-        category: "",
-      };
-
-      try {
-        const call = apiClient.getItems(request);
-        for await (const item of call.responses) {
-          apiItems.push(item);
-        }
-        await call.status;
-        await call.trailers;
-      } catch {}
-
-      return apiItems;
+  createEffect(async () => {
+    const request: ApiGetItemRequest = {
+      itemId: fetchItemId(),
+    };
+    const call = await apiClient.getItem(request);
+    const item = call.response;
+    if (item.category in items) {
+      setItems(item.category, (prev) => [...prev, item]);
+    } else {
+      setItems(item.category, [item]);
     }
-  );
+  });
 
   const addItem = async (
     name: string,
@@ -63,16 +73,16 @@ export default function Restaurant() {
     };
 
     try {
-      await apiClient.addItem(request);
-      await refetch();
+      const call = await apiClient.addItem(request);
+      setFetchItemId(call.response.itemId);
     } catch {}
   };
 
   return (
-    <Show when={restaurant() && items()}>
+    <Show when={restaurant()}>
       <Menu
         restaurant={restaurant() as ApiRestaurant}
-        items={items() as ApiItem[]}
+        items={items}
         addItem={addItem}
       />
     </Show>

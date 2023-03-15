@@ -1,4 +1,5 @@
 import { createSignal, Show } from "solid-js";
+import { createStore } from "solid-js/store";
 import { useParams } from "solid-start";
 import Menu from "~/components/Menu";
 import { apiClient } from "~/services/api";
@@ -12,42 +13,39 @@ import {
 export default function RestaurantMenu() {
   const params = useParams<{ id: string }>();
   const [restaurant, setRestaurant] = createSignal<ApiRestaurant>();
-  const [items, setItems] = createSignal<ApiItem[]>();
+  const [items, setItems] = createStore<{ [category: string]: ApiItem[] }>({});
 
-  // Fetching data with createResource or createServerData$ causes an undefined error
-  // Possibly a bug with this version (0.2.21) of SolidStart
   (async function () {
+    const restRequest: ApiGetRestaurantRequest = {
+      restId: params.id,
+    };
     try {
-      const restRequest: ApiGetRestaurantRequest = {
-        restId: params.id,
-      };
       const restCall = await apiClient.getRestaurant(restRequest);
       setRestaurant(restCall.response);
+    } catch {}
 
-      const apiItems: ApiItem[] = [];
-
-      const request: ApiGetItemsRequest = {
-        restId: params.id,
-        category: "",
-      };
-
-      try {
-        const call = apiClient.getItems(request);
-        for await (const item of call.responses) {
-          apiItems.push(item);
+    const request: ApiGetItemsRequest = {
+      restId: params.id,
+      category: "",
+    };
+    try {
+      const call = apiClient.getItems(request);
+      for await (const item of call.responses) {
+        if (item.category in items) {
+          setItems(item.category, (prev) => [...prev, item]);
+        } else {
+          setItems(item.category, [item]);
         }
-        await call.status;
-        await call.trailers;
-      } catch {}
-
-      setItems(apiItems);
+      }
+      await call.status;
+      await call.trailers;
     } catch {}
   })();
 
   return (
-    <Show when={restaurant() && items()}>
+    <Show when={restaurant()}>
       <div class="p-4">
-        <Menu restaurant={restaurant()!} items={items()!} />
+        <Menu restaurant={restaurant()!} items={items} />
       </div>
     </Show>
   );

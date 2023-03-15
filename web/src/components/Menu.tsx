@@ -5,7 +5,9 @@ import EditingItem from "./EditingItem";
 
 type Props = {
   restaurant: ApiRestaurant;
-  items: ApiItem[];
+  items: {
+    [category: string]: ApiItem[];
+  };
   addItem?: (
     name: string,
     price: number,
@@ -16,18 +18,6 @@ type Props = {
 };
 
 export default function Menu(props: Props) {
-  const itemsByCategory: {
-    [category: string]: ApiItem[];
-  } = {};
-
-  for (const item of props.items) {
-    if (item.category in itemsByCategory) {
-      itemsByCategory[item.category].push(item);
-    } else {
-      itemsByCategory[item.category] = [item];
-    }
-  }
-
   return (
     <div class="flex flex-col gap-8">
       <div class="flex gap-4">
@@ -49,13 +39,13 @@ export default function Menu(props: Props) {
         </div>
       </div>
       <div class="flex flex-col gap-8 mb-8">
-        <For each={Object.keys(itemsByCategory)}>
+        <For each={Object.keys(props.items)}>
           {(category) => (
             <div>
               <h2 class="border-b-2 py-2 px-4 text-3xl font-semibold">
                 {category}
               </h2>
-              <For each={itemsByCategory[category]}>
+              <For each={props.items[category]}>
                 {(item) => <Item item={item} />}
               </For>
             </div>
