@@ -1,17 +1,12 @@
 import { createSignal, createEffect, Show, For } from "solid-js";
-import {
-  useNavigate,
-  A,
-  Outlet,
-  useRouteData,
-  createRouteData,
-} from "solid-start";
+import { useNavigate, A, Outlet, createRouteData } from "solid-start";
 import { HiSolidMenuAlt3 } from "solid-icons/hi";
 import { RiSystemMenuUnfoldLine } from "solid-icons/ri";
 import { AiOutlineLogout } from "solid-icons/ai";
 import {
   sessionStore,
   setSessionStore,
+  restaurantsStore,
   setRestaurantsStore,
 } from "~/lib/stores";
 import { apiClient } from "~/services/api";
@@ -50,8 +45,6 @@ export function routeData() {
 }
 
 export default function AppLayout() {
-  const restaurants = useRouteData<typeof routeData>();
-
   const [expanded, setExpanded] = createSignal(true);
   const navigate = useNavigate();
 
@@ -70,6 +63,24 @@ export default function AppLayout() {
     if (!sessionStore.jwt) {
       navigate("/login");
     }
+  });
+
+  createEffect(async () => {
+    const restaurants: ApiRestaurant[] = [];
+
+    const request: ApiGetRestaurantsRequest = {
+      ownerId: sessionStore.owner.id,
+    };
+    try {
+      const call = apiClient.getRestaurants(request);
+      for await (const restaurant of call.responses) {
+        restaurants.push(restaurant);
+      }
+      await call.status;
+      await call.trailers;
+    } catch {}
+
+    setRestaurantsStore(restaurants);
   });
 
   const logout = () => {
@@ -101,7 +112,7 @@ export default function AppLayout() {
             <h3 class="text-neutral-content text-center text-xl font-semibold">
               My Restaurants
             </h3>
-            <For each={restaurants()}>
+            <For each={restaurantsStore}>
               {(restaurant) => {
                 const imgUrl = URL.createObjectURL(
                   new Blob([restaurant.logo], {

@@ -1,29 +1,36 @@
-import { createSignal, Show } from "solid-js";
+import { Show } from "solid-js";
 import { createStore } from "solid-js/store";
-import { useParams } from "solid-start";
+import { RouteDataArgs, useParams, useRouteData } from "solid-start";
+import { createServerData$ } from "solid-start/server";
 import Menu from "~/components/Menu";
 import { apiClient } from "~/services/api";
 import {
   ApiGetRestaurantRequest,
   ApiItem,
   ApiGetItemsRequest,
-  ApiRestaurant,
 } from "~/services/proto/api";
+
+export function routeData({ params }: RouteDataArgs) {
+  return createServerData$(
+    async (restId) => {
+      const request: ApiGetRestaurantRequest = {
+        restId: restId,
+      };
+      const call = await apiClient.getRestaurant(request);
+      return call.response;
+    },
+    {
+      key: () => params.id,
+    }
+  );
+}
 
 export default function RestaurantMenu() {
   const params = useParams<{ id: string }>();
-  const [restaurant, setRestaurant] = createSignal<ApiRestaurant>();
+  const restaurant = useRouteData<typeof routeData>();
   const [items, setItems] = createStore<{ [category: string]: ApiItem[] }>({});
 
   (async function () {
-    const restRequest: ApiGetRestaurantRequest = {
-      restId: params.id,
-    };
-    try {
-      const restCall = await apiClient.getRestaurant(restRequest);
-      setRestaurant(restCall.response);
-    } catch {}
-
     const request: ApiGetItemsRequest = {
       restId: params.id,
       category: "",
