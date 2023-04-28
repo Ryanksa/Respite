@@ -29,40 +29,10 @@ export default function EditingItem({ addItem }: Props) {
   };
 
   return (
-    <div class="bg-base-300 p-4 rounded-lg">
-      <div class="flex gap-4 justify-between mb-4">
-        <div class="flex flex-col gap-3 w-1/2">
-          <input
-            type="text"
-            placeholder="Name"
-            class="input w-full max-w-sm text-xl"
-            value={name()}
-            onChange={(e) => {
-              setName(e.currentTarget.value);
-            }}
-          />
-          <textarea
-            class="textarea w-full max-w-sm h-24"
-            placeholder="Description"
-            value={description()}
-            onChange={(e) => {
-              setDescription(e.currentTarget.value);
-            }}
-          />
-          <label class="input-group input-group-sm">
-            <span class="bg-base-200">$</span>
-            <input
-              type="number"
-              class="input input-sm w-24"
-              value={price()}
-              onChange={(e) => {
-                setPrice(e.currentTarget.valueAsNumber);
-              }}
-            />
-          </label>
-        </div>
-        <div class="flex flex-col items-center gap-4 w-1/2 relative -top-10">
-          <label class="input-group input-group-vertical">
+    <div class="bg-base-300 p-4 pb-0 rounded-lg">
+      <div class="flex gap-4 justify-between">
+        <div class="flex flex-col gap-4 w-1/2 relative -top-10">
+          <label class="input-group input-group-vertical max-w-sm">
             <span class="bg-base-300">Category</span>
             <input
               type="text"
@@ -73,6 +43,36 @@ export default function EditingItem({ addItem }: Props) {
               }}
             />
           </label>
+          <input
+            type="text"
+            placeholder="Name"
+            class="input w-full text-2xl"
+            value={name()}
+            onChange={(e) => {
+              setName(e.currentTarget.value);
+            }}
+          />
+          <input
+            class="input w-full h-8"
+            placeholder="Description"
+            value={description()}
+            onChange={(e) => {
+              setDescription(e.currentTarget.value);
+            }}
+          />
+          <label class="input-group input-group-sm">
+            <span class="bg-base-200 text-lg px-2">$</span>
+            <input
+              type="number"
+              class="input input-sm w-32 text-2xl"
+              value={price()}
+              onChange={(e) => {
+                setPrice(e.currentTarget.valueAsNumber);
+              }}
+            />
+          </label>
+        </div>
+        <div class="flex flex-col items-center gap-8 w-1/2">
           <div>
             <div class="grid place-items-center">
               {image().length > 0 ? (
@@ -108,11 +108,11 @@ export default function EditingItem({ addItem }: Props) {
               }}
             />
           </div>
+          <button class="btn btn-primary px-24" onClick={submit}>
+            Add Item
+          </button>
         </div>
       </div>
-      <button class="btn btn-outline btn-primary w-full" onClick={submit}>
-        Add Item
-      </button>
     </div>
   );
 }

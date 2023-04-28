@@ -1,4 +1,5 @@
 import { ApiItem } from "~/services/proto/api";
+import { toImageUrl } from "~/lib/utils";
 
 type Props = {
   item: ApiItem;
@@ -18,11 +19,7 @@ export default function Item(props: Props) {
       {props.item.image.length > 0 && (
         <div class="grid place-items-center">
           <img
-            src={URL.createObjectURL(
-              new Blob([props.item.image], {
-                type: "image/*",
-              })
-            )}
+            src={toImageUrl(props.item.image)}
             class="w-24 object-contain rounded"
           />
         </div>

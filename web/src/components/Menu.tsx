@@ -1,8 +1,8 @@
-import { createEffect, createSignal, For } from "solid-js";
+import { For } from "solid-js";
 import { ApiRestaurant, ApiItem } from "~/services/proto/api";
 import Item from "./Item";
 import EditingItem from "./EditingItem";
-import { u8IntArrayToBase64 } from "~/lib/utils";
+import { toImageUrl } from "~/lib/utils";
 
 type Props = {
   restaurant: ApiRestaurant;
@@ -19,18 +19,13 @@ type Props = {
 };
 
 export default function Menu(props: Props) {
-  const [logoSrc, setLogoSrc] = createSignal(
-    u8IntArrayToBase64(props.restaurant.logo)
-  );
-
-  createEffect(() => {
-    setLogoSrc(u8IntArrayToBase64(props.restaurant.logo));
-  });
-
   return (
     <div class="flex flex-col gap-8">
       <div class="flex gap-4">
-        <img src={logoSrc()} class="w-24 object-contain rounded" />
+        <img
+          src={toImageUrl(props.restaurant.logo)}
+          class="w-24 object-contain rounded"
+        />
         <div>
           <h4 class="text-3xl font-bold text-base-content">
             {props.restaurant.name}

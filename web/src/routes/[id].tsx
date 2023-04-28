@@ -8,6 +8,7 @@ import {
   ApiGetRestaurantRequest,
   ApiItem,
   ApiGetItemsRequest,
+  ApiRestaurant,
 } from "~/services/proto/api";
 
 export function routeData({ params }: RouteDataArgs) {
@@ -51,8 +52,8 @@ export default function RestaurantMenu() {
 
   return (
     <Show when={restaurant()}>
-      <div class="p-4">
-        <Menu restaurant={restaurant()!} items={items} />
+      <div class="p-8">
+        <Menu restaurant={restaurant() as ApiRestaurant} items={items} />
       </div>
     </Show>
   );

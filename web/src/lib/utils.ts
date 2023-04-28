@@ -1,7 +1,11 @@
-export const u8IntArrayToBase64 = (u8: Uint8Array) => {
-  const base64String = btoa(
-    // @ts-ignore
-    String.fromCharCode.apply(null, u8)
-  );
-  return `data:image/png;base64,${base64String}`;
+export const toImageUrl = (u8: Uint8Array) => {
+  try {
+    return URL.createObjectURL(
+      new Blob([u8], {
+        type: "image/*",
+      })
+    );
+  } catch {
+    return "";
+  }
 };
